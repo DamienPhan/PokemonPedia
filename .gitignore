@@ -399,3 +399,5 @@ FodyWeavers.xsd
 
 *.csv
 *.json
+*.png
+*.images/
