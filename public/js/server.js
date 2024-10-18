@@ -1,29 +1,58 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
 const PORT = 3000;
 
-// Servir les fichiers statiques dans le dossier "public"
-app.use(express.static(path.join(__dirname, 'public')));
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-// Charger la base de données des Pokémon
-const pokedex = JSON.parse(fs.readFileSync('./data/pokedex.json', 'utf-8'));
+// Connexion à MongoDB
+mongoose.connect('mongodb://localhost:27017/PokemonDB');
 
-// Route pour rechercher un Pokémon par nom
-app.get('/api/pokemon/:name', (req, res) => {
-    const name = req.params.name.toLowerCase();
-    const pokemon = pokedex[Object.keys(pokedex).find(p => p.toLowerCase() === name)];
-    
-    if (pokemon) {
-        res.json({ name: name.charAt(0).toUpperCase() + name.slice(1), ...pokemon });
-    } else {
-        res.status(404).json({ error: "Pokemon not found" });
+
+// Définir le modèle
+const PokemonSchema = new mongoose.Schema({
+    PName: String,
+    Items: Object,
+    RawCount: Number,
+    Spreads: Object,
+    TeraTypes: Object,
+    Teammates: Object,
+    ViabilityCeiling: Array,
+    Abilities: Object,
+    ChecksAndCounters: Object,
+    usage: Number,
+    Moves: Object,
+    Happiness: Object,
+    Image: String,
+    Index: Number,
+    Type1: String,
+    Type2: String,
+    Total: Number,
+    HP: Number,
+    Attack: Number,
+    Defense: Number,
+    SP_Atk: Number,
+    SP_Def: Number,
+    Speed: Number,
+});
+
+const Pokemon = mongoose.model('PokemonData', PokemonSchema);
+
+// Route pour récupérer les données Pokémon
+app.get('/api/pokemon', async (req, res) => {
+    try {
+        const pokemonList = await Pokemon.find();
+        res.json(pokemonList);
+    } catch (error) {
+        res.status(500).send(error);
     }
 });
 
 // Démarrer le serveur
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
