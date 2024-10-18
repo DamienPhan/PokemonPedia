@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Search</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Pokemon Search</h1>
+        <!-- Search bar for Pokemon -->
+        <input type="text" id="search-bar" placeholder="Enter Pokemon name" oninput="searchPokemon()" autocomplete="off">
+        <ul id="suggestions"></ul> <!-- List to show suggestions -->
+
+        <!-- Section to display Pokemon details -->
+        <div id="pokemon-details"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
