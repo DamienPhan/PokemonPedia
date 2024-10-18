@@ -80,17 +80,15 @@ os.makedirs(temp_output_path, exist_ok=True)
 results = df_joined.collect()
 
 
-# Renommer et déplacer le fichier vers le chemin souhaité
 final_output_path = f"{dataPath}/{input_file_name}_joined.json"
 with open(final_output_path, 'w') as json_file:
-    json_file.write('[')  # Commencer le tableau JSON
+    json_file.write('[')  
     for i, row in enumerate(results):
-        json.dump(row.asDict(), json_file)  # Convertir la ligne en dictionnaire JSON
+        json.dump(row.asDict(), json_file)  
         if i < len(results) - 1:
-            json_file.write(',')  # Ajouter une virgule sauf pour le dernier élément
-    json_file.write(']')  # Finir le tableau JSON
+            json_file.write(',')
+    json_file.write(']')  
 
-# Supprimer le répertoire temporaire
 shutil.rmtree(temp_output_path)
 
 spark.stop()
