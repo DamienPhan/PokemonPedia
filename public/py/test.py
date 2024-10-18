@@ -7,6 +7,7 @@ from pyspark.sql.functions import explode, col, lower, to_json
 
 smogonPath = "ressources/smogon/gen9vgc2024reghbo3-1760.json"
 pokedexPath = "ressources/pokedex/pokedex.csv"
+dataPath = "ressources/data_output"
 
 spark = SparkSession.builder.appName("Pokemon Join").getOrCreate()
 
@@ -67,6 +68,10 @@ input_file_name = os.path.splitext(os.path.basename(smogonPath))[0]
 
 # Chemin temporaire pour sauver le fichier
 temp_output_path = "temp_output"
+df_joined.coalesce(1).write.json(temp_output_path, mode="overwrite")
+
+# Trouver le fichier JSON créé
+temp_file = [f for f in os.listdir(temp_output_path) if f.endswith(".json")][0]
 
 # Créer un répertoire temporaire
 os.makedirs(temp_output_path, exist_ok=True)
@@ -74,8 +79,9 @@ os.makedirs(temp_output_path, exist_ok=True)
 # Collecter les résultats sous forme de liste de dictionnaires
 results = df_joined.collect()
 
-# Écrire dans un fichier JSON valide
-final_output_path = f"{input_file_name}_joined.json"
+
+# Renommer et déplacer le fichier vers le chemin souhaité
+final_output_path = f"{dataPath}/{input_file_name}_joined.json"
 with open(final_output_path, 'w') as json_file:
     json_file.write('[')  # Commencer le tableau JSON
     for i, row in enumerate(results):
