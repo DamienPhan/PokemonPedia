@@ -1,5 +1,6 @@
 import os
 import shutil
+import json
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import explode, col, lower, to_json
@@ -63,12 +64,27 @@ df_joined = df_joined.withColumn("Items", to_json(col("Items")))
 df_joined = df_joined.drop("Name")
 
 input_file_name = os.path.splitext(os.path.basename(smogonPath))[0]
+
 # Chemin temporaire pour sauver le fichier
 temp_output_path = "temp_output"
-df_joined.coalesce(1).write.json(temp_output_path, mode="overwrite")
-temp_file = [f for f in os.listdir(temp_output_path) if f.endswith(".json")][0]
+
+# Créer un répertoire temporaire
+os.makedirs(temp_output_path, exist_ok=True)
+
+# Collecter les résultats sous forme de liste de dictionnaires
+results = df_joined.collect()
+
+# Écrire dans un fichier JSON valide
 final_output_path = f"{input_file_name}_joined.json"
-shutil.move(f"{temp_output_path}/{temp_file}", final_output_path)
+with open(final_output_path, 'w') as json_file:
+    json_file.write('[')  # Commencer le tableau JSON
+    for i, row in enumerate(results):
+        json.dump(row.asDict(), json_file)  # Convertir la ligne en dictionnaire JSON
+        if i < len(results) - 1:
+            json_file.write(',')  # Ajouter une virgule sauf pour le dernier élément
+    json_file.write(']')  # Finir le tableau JSON
+
+# Supprimer le répertoire temporaire
 shutil.rmtree(temp_output_path)
 
 spark.stop()
