@@ -4,8 +4,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import explode, col, lower, to_json
 
-smogonPath = "smogon.json"
-pokedexPath = "pokedex/pokedex.csv"
+smogonPath = "ressources/smogon/gen9vgc2024reghbo3-1760.json"
+pokedexPath = "ressources/pokedex/pokedex.csv"
 
 spark = SparkSession.builder.appName("Pokemon Join").getOrCreate()
 
@@ -32,7 +32,7 @@ schema = StructType([
     ]), True))
 ])
 
-df_json = spark.read.schema(schema).json("smogon.json")
+df_json = spark.read.schema(schema).json(smogonPath)
 
 df_data = df_json.select(
     explode("data").alias("Name", "Details")
