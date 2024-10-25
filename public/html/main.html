@@ -4,17 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Search</title>
-    <link rel="stylesheet" href="/css/style.css"> <!-- Référence au fichier CSS -->
+    <link rel="stylesheet" href="../css/main.css"> <!-- Référence au fichier CSS -->
 </head>
 <body class="theme--dark">
     <div class="container">
         <h1>Pokemon Search</h1>
-        <!-- Search bar for Pokemon -->
+        <!-- Barre de recherche pour Pokémon -->
         <input type="text" id="search-bar" placeholder="Enter Pokemon name" oninput="searchPokemon()" autocomplete="off">
-        <ul id="suggestions"></ul> <!-- List to show suggestions -->
-
-        <!-- Section to display Pokemon details -->
-        <div id="pokemon-details"></div>
+        <ul id="suggestions"></ul> <!-- Liste pour afficher les suggestions -->
     </div>
 
     <script src="app.js"></script>
