@@ -2,7 +2,8 @@ import json
 from pymongo import MongoClient
 
 # Chemin relatif pour remonter de deux niveaux
-final_output_path = "/Users/lucaswallner/Desktop/BUT/Semestre5/R505/git/2024_R510/ressources/data_output/gen9vgc2024reghbo3-1760_joined.json"
+final_output_path = "../../ressources/data_output/gen9vgc2024reghbo3-1760_joined.json"
+# final_output_path = "/Users/lucaswallner/Desktop/BUT/Semestre5/R505/git/2024_R510/ressources/data_output/gen9vgc2024reghbo3-1760_joined.json"
 client = MongoClient("mongodb://localhost:27017/")
 
 # Créer une base de données
