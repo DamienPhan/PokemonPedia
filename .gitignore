@@ -1,5 +1,14 @@
 # Created by venv; see https://docs.python.org/3/library/venv.html
-*
 
-pymongo/
 .DS_Store
+.venv/
+bin/
+__pycache__/
+data/
+lib/
+node_modules/
+ressources/
+package-lock.json
+package.json
+pyvenv.cfg
+pymongo/
