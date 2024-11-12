@@ -20,8 +20,7 @@ html, body {
     padding: 0;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Permet de mieux centrer l'affichage */
-    flex-direction: column; /* Permet une meilleure organisation du contenu */
+    align-items: center; /* Centre tout verticalement */
 }
 
 .container {
@@ -32,6 +31,9 @@ html, body {
     border-radius: 8px;
     box-shadow: 0 4px 8px var(--theme-shadow-color);
     overflow-y: auto;
+    max-height: 90vh; /* Limite la hauteur */
+    display: flex;
+    flex-direction: column;
 }
 
 h1, h2 {

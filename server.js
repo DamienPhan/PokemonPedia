@@ -30,11 +30,11 @@ const pokemonSchema = new mongoose.Schema({
     Spreads: Object,
     "Tera Types": Object,
     Teammates: [String],
-    "Viability Ceiling": Number,
+    "Viability Ceiling": [Number], // Corrigé pour être un tableau
     Abilities: Object,
     "Checks and Counters": [String],
     usage: Number,
-    Moves: [String],
+    Moves: Object, // Ajusté pour être un objet si Moves est stocké ainsi
     Happiness: Number,
     Image: String,
     Index: Number,
@@ -61,16 +61,16 @@ app.get('/api/pokemon/:name', async (req, res) => {
         if (pokemon) {
             res.json({
                 name: pokemon.PName,
-                items: JSON.parse(pokemon.Items || '{}'),
+                items: JSON.parse(pokemon.Items || '{}'), // Corrigé pour parser JSON
                 rawCount: pokemon["Raw count"],
                 spreads: pokemon.Spreads,
                 teraTypes: pokemon["Tera Types"],
-                teammates: pokemon.Teammates,
-                viabilityCeiling: pokemon["Viability Ceiling"],
+                teammates: pokemon.Teammates || [], // Précaution si non défini
+                viabilityCeiling: pokemon["Viability Ceiling"] || [], // Assurer que c'est un tableau
                 abilities: pokemon.Abilities,
-                checksAndCounters: pokemon["Checks and Counters"],
+                checksAndCounters: pokemon["Checks and Counters"] || [], // Précaution si non défini
                 usage: pokemon.usage,
-                moves: pokemon.Moves,
+                moves: pokemon.Moves || {}, // Assurer que moves est un objet
                 happiness: pokemon.Happiness,
                 image: pokemon.Image,
                 index: pokemon.Index,

@@ -4,15 +4,15 @@ function getQueryParam(param) {
     return urlParams.get(param);
 }
 
-// Fonction pour récupérer les paramètres de l'URL
-function getQueryParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-}
-
 // Fonction pour afficher les informations du Pokémon
 function displayPokemonDetails(pokemon) {
     const detailsDiv = document.getElementById('pokemon-details');
+
+    // Vérifiez si le Pokémon contient bien les propriétés nécessaires
+    if (!pokemon) {
+        detailsDiv.innerHTML = '<p>Pokémon non trouvé</p>';
+        return;
+    }
 
     detailsDiv.innerHTML = `
         <h2>${pokemon.name}</h2>
@@ -36,7 +36,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-items">
             <h3>Items</h3>
             <ul>
-                ${Object.keys(pokemon.items || {}).map(item => `<li>${item}</li>`).join('')}
+                ${pokemon.items && Object.keys(pokemon.items).length > 0
+                    ? Object.keys(pokemon.items).map(item => `<li>${item}: ${pokemon.items[item]}</li>`).join('')
+                    : '<li>Aucun item disponible</li>'
+                }
             </ul>
         </section>
 
@@ -44,7 +47,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-spreads">
             <h3>Spreads</h3>
             <ul>
-                ${Object.keys(pokemon.spreads || {}).map(spread => `<li>${spread}</li>`).join('')}
+                ${pokemon.spreads && Object.keys(pokemon.spreads).length > 0
+                    ? Object.keys(pokemon.spreads).map(spread => `<li>${spread}: ${pokemon.spreads[spread]}</li>`).join('')
+                    : '<li>Aucun spread disponible</li>'
+                }
             </ul>
         </section>
 
@@ -52,7 +58,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-tera-types">
             <h3>Tera Types</h3>
             <ul>
-                ${Object.keys(pokemon.teraTypes || {}).map(tera => `<li>${tera}</li>`).join('')}
+                ${Array.isArray(pokemon.teraTypes) && pokemon.teraTypes.length > 0
+                    ? pokemon.teraTypes.map(tera => `<li>${tera}</li>`).join('')
+                    : '<li>Aucun Tera Type disponible</li>'
+                }
             </ul>
         </section>
 
@@ -60,7 +69,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-teammates">
             <h3>Teammates</h3>
             <ul>
-                ${(pokemon.teammates || []).map(teammate => `<li>${teammate}</li>`).join('')}
+                ${Array.isArray(pokemon.teammates) && pokemon.teammates.length > 0
+                    ? pokemon.teammates.map(teammate => `<li>${teammate}</li>`).join('')
+                    : '<li>Aucun coéquipier disponible</li>'
+                }
             </ul>
         </section>
 
@@ -68,7 +80,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-abilities">
             <h3>Abilities</h3>
             <ul>
-                ${Object.keys(pokemon.abilities || {}).map(ability => `<li>${ability}</li>`).join('')}
+                ${Array.isArray(pokemon.abilities) && pokemon.abilities.length > 0
+                    ? pokemon.abilities.map(ability => `<li>${ability}</li>`).join('')
+                    : '<li>Aucune capacité disponible</li>'
+                }
             </ul>
         </section>
 
@@ -76,7 +91,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-checks">
             <h3>Checks and Counters</h3>
             <ul>
-                ${(pokemon.checksAndCounters || []).map(counter => `<li>${counter}</li>`).join('')}
+                ${Array.isArray(pokemon.checksAndCounters) && pokemon.checksAndCounters.length > 0
+                    ? pokemon.checksAndCounters.map(counter => `<li>${counter}</li>`).join('')
+                    : '<li>Aucun counter disponible</li>'
+                }
             </ul>
         </section>
 
@@ -84,7 +102,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-moves">
             <h3>Moves</h3>
             <ul>
-                ${(pokemon.moves || []).map(move => `<li>${move}</li>`).join('')}
+                ${Array.isArray(pokemon.moves) && pokemon.moves.length > 0
+                    ? pokemon.moves.map(move => `<li>${move}</li>`).join('')
+                    : '<li>Aucun move disponible</li>'
+                }
             </ul>
         </section>
 
