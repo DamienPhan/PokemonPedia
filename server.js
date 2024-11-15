@@ -30,12 +30,12 @@ const pokemonSchema = new mongoose.Schema({
     Spreads: Object,
     "Tera Types": Object,
     Teammates: Object,
-    "Viability Ceiling": [Number], // Corrigé pour être un tableau
+    "Viability Ceiling": [Number],
     Abilities: Object,
     "Checks and Counters": [String],
     usage: Number,
-    Moves: Object, // Ajusté pour être un objet si Moves est stocké ainsi
-    Happiness: Number,
+    Moves: Object,
+    Happiness: Object,
     Image: String,
     Index: Number,
     "Type 1": String,
@@ -51,40 +51,52 @@ const pokemonSchema = new mongoose.Schema({
 
 const Pokemon = mongoose.model('Pokemon', pokemonSchema);
 
+// Fonction pour nettoyer les guillemets excédentaires
+function cleanString(str) {
+    if (typeof str === 'string') {
+        return str.replace(/^"|"$/g, '');  // Supprime les guillemets au début et à la fin de la chaîne
+    }
+    return str;
+}
+
 // Route pour récupérer les informations d'un Pokémon depuis MongoDB
 app.get('/api/pokemon/:name', async (req, res) => {
     const pokemonName = req.params.name.toLowerCase();
 
+    console.log(`Recherche du Pokémon : ${pokemonName}`); // Log pour le nom recherché
+
     try {
         const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
+
+        console.log("Données récupérées depuis MongoDB:", pokemon); // Log pour afficher les données récupérées
 
         if (pokemon) {
             // Formater la réponse et assurer que toutes les valeurs sont correctement traitées
             res.json({
-                name: pokemon.PName,
-                items: pokemon.Items ? JSON.parse(pokemon.Items) : {}, // Si "Items" est une chaîne, la parser en objet
-                rawCount: pokemon['Raw count'] || 0, // Valeur par défaut si non définie
-                spreads: pokemon.Spreads || {}, // Valeur par défaut si non définie
-                teraTypes: Array.isArray(pokemon["Tera Types"]) ? pokemon["Tera Types"] : [], // Vérifier si c'est un tableau
-                teammates: pokemon.Teammates || [], // Valeur par défaut si non définie
-                viabilityCeiling: Array.isArray(pokemon["Viability Ceiling"]) ? pokemon["Viability Ceiling"] : [], // Vérifier si c'est un tableau
-                abilities: pokemon.Abilities || {}, // Valeur par défaut si non définie
-                checksAndCounters: pokemon["Checks and Counters"] || [], // Valeur par défaut si non définie
-                usage: pokemon.usage || 0, // Valeur par défaut si non définie
-                moves: pokemon.Moves || {}, // Valeur par défaut si non définie
-                happiness: pokemon.Happiness || 0, // Valeur par défaut si non définie
-                image: pokemon.Image || '', // Valeur par défaut si non définie
-                index: pokemon.Index || 0, // Valeur par défaut si non définie
-                type1: pokemon['Type 1'] || '', // Valeur par défaut si non définie
-                type2: pokemon['Type 2'] || '', // Valeur par défaut si non définie
-                total: pokemon.Total || 0, // Valeur par défaut si non définie
+                name: cleanString(pokemon.PName),
+                items: pokemon.Items ? JSON.parse(pokemon.Items) : {},
+                rawCount: pokemon['Raw count'] || 0,
+                spreads: pokemon.Spreads || {},
+                teraTypes: Array.isArray(pokemon["Tera Types"]) ? pokemon["Tera Types"] : [],
+                teammates: pokemon.Teammates || [],
+                viabilityCeiling: Array.isArray(pokemon["Viability Ceiling"]) ? pokemon["Viability Ceiling"] : [],
+                abilities: pokemon.Abilities || {},
+                checksAndCounters: pokemon["Checks and Counters"] || [],
+                usage: pokemon.usage || 0,
+                moves: pokemon.Moves || {},
+                happiness: pokemon.Happiness || 0,
+                image: cleanString(pokemon.Image),
+                index: pokemon.Index || 0,
+                type1: cleanString(pokemon['Type 1']) || '',
+                type2: cleanString(pokemon['Type 2']) || '',
+                total: pokemon.Total || 0,
                 stats: {
-                    hp: pokemon.HP || 0, // Valeur par défaut si non définie
-                    attack: pokemon.Attack || 0, // Valeur par défaut si non définie
-                    defense: pokemon.Defense || 0, // Valeur par défaut si non définie
-                    spAtk: pokemon['SP. Atk.'] || 0, // Valeur par défaut si non définie
-                    spDef: pokemon['SP. Def'] || 0, // Valeur par défaut si non définie
-                    speed: pokemon.Speed || 0 // Valeur par défaut si non définie
+                    hp: pokemon.HP || 0,
+                    attack: pokemon.Attack || 0,
+                    defense: pokemon.Defense || 0,
+                    spAtk: pokemon['SP. Atk.'] || 0,
+                    spDef: pokemon['SP. Def'] || 0,
+                    speed: pokemon.Speed || 0
                 }
             });
         } else {
@@ -99,4 +111,24 @@ app.get('/api/pokemon/:name', async (req, res) => {
 // Démarrer le serveur
 app.listen(PORT, () => {
     console.log(`Serveur en écoute sur le port ${PORT}`);
+});
+
+// Route pour rechercher des Pokémon par nom partiel
+app.get('/api/pokemon/suggestions/:query', async (req, res) => {
+    const query = req.params.query.toLowerCase();
+
+    try {
+        // Recherche des noms de Pokémon contenant le texte de la requête
+        const suggestions = await Pokemon.find(
+            { PName: { $regex: query, $options: 'i' } }, // Recherche insensible à la casse
+            { PName: 1, _id: 0 } // Renvoyer uniquement les noms des Pokémon
+        ).limit(10); // Limiter à 10 résultats
+
+        // Formater les noms pour le front-end
+        const pokemonNames = suggestions.map(p => cleanString(p.PName));
+        res.json(pokemonNames);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des suggestions:', error);
+        res.status(500).send('Erreur serveur');
+    }
 });

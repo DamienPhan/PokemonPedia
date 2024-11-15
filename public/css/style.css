@@ -77,3 +77,50 @@ a {
     color: var(--theme-link-color);
     text-decoration: none;
 }
+
+body.theme--dark {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+#search-bar {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+#suggestions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#suggestions li {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    background: #333;
+    border: 1px solid #444;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    color: #fff;
+}
+
+#suggestions li:hover {
+    background: #444;
+}
+
+#suggestions img {
+    border-radius: 50%;
+}

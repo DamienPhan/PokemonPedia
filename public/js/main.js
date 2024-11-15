@@ -1,53 +1,48 @@
-// Rechercher un Pokémon dans la base de données
 function searchPokemon() {
     const query = document.getElementById('search-bar').value.toLowerCase();
     const suggestionsBox = document.getElementById('suggestions');
 
-    // Vider la liste des suggestions si le champ de recherche est vide
+    // Vider les suggestions si la barre de recherche est vide
     if (query.length === 0) {
         suggestionsBox.innerHTML = '';
         return;
     }
 
-    // Effectuer une requête pour obtenir les suggestions de Pokémon
+    // Appeler l'API pour obtenir les suggestions de Pokémon
     fetch('/api/pokemon/suggestions/' + query)
         .then(response => {
             if (response.ok) {
                 return response.json();
             } else {
-                throw new Error('Pokémon non trouvé');
+                throw new Error('Erreur lors de la récupération des suggestions');
             }
         })
         .then(suggestions => {
-            // Afficher les suggestions dans la liste
-            suggestionsBox.innerHTML = suggestions.map(pokemon => 
-                `<li onclick="selectPokemon('${pokemon.name}')">${pokemon.name}</li>`
+            // Générer la liste des suggestions avec images et noms
+            suggestionsBox.innerHTML = suggestions.map(name => 
+                `<li onclick="selectPokemon('${name}')">
+                    <img src="/ressources/pokedex/${name.toLowerCase()}.png" 
+                         alt="${name}" 
+                         style="width: 50px; height: 50px; margin-right: 10px;" 
+                         onerror="this.src='/ressources/pokedex/default.png';" />
+                    ${name}
+                </li>`
             ).join('');
         })
         .catch(error => {
-            suggestionsBox.innerHTML = ''; // Vider les suggestions si une erreur se produit
-            console.error(error);
+            console.error('Erreur lors de la récupération des suggestions:', error);
+            suggestionsBox.innerHTML = '<li>Aucun Pokémon trouvé</li>';
         });
 }
 
-// Sélectionner un Pokémon et afficher ses détails
+// Fonction pour rediriger vers les détails du Pokémon
 function selectPokemon(pokemonName) {
-    fetch('/api/pokemon/' + pokemonName)
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error('Pokémon non trouvé');
-            }
-        })
-        .then(pokemon => {
-            displayPokemonDetails(pokemon);
-            // Vider la liste des suggestions
-            document.getElementById('suggestions').innerHTML = '';
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    window.location.href = `/html/info.html?name=${encodeURIComponent(pokemonName)}`;
+}
+
+// Sélectionner un Pokémon et rediriger vers la vue avec ses détails
+function selectPokemon(pokemonName) {
+    window.location.href = `/html/info.html?name=${encodeURIComponent(pokemonName)}`;
 }
 
 // Afficher les détails du Pokémon
@@ -58,4 +53,3 @@ function displayPokemonDetails(pokemon) {
         <img src="${pokemon.image}" alt="${pokemon.name}" />
     `;
 }
-

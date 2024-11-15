@@ -14,6 +14,35 @@ function displayPokemonDetails(pokemon) {
         return;
     }
 
+    // Fonction pour obtenir la classe CSS correspondant au type
+    function getTypeClass(type) {
+        const typeClasses = {
+            'fire': 'type-fire',
+            'water': 'type-water',
+            'grass': 'type-grass',
+            'electric': 'type-electric',
+            'poison': 'type-poison',
+            'bug': 'type-bug',
+            'normal': 'type-normal',
+            'psychic': 'type-psychic',
+            'fighting': 'type-fighting',
+            'fairy': 'type-fairy',
+            'rock': 'type-rock',
+            'ghost': 'type-ghost',
+            'ice': 'type-ice',
+            'dragon': 'type-dragon',
+            'dark': 'type-dark',
+            'steel': 'type-steel',
+            'flying': 'type-flying',
+            'unknown': 'type-unknown'
+        };
+        return typeClasses[type.toLowerCase()] || 'type-unknown'; // Default to 'unknown' if type not found
+    }
+
+    // Appel de la fonction getTypeClass pour obtenir les classes CSS des types
+    const type1Class = getTypeClass(pokemon.type1);
+    const type2Class = pokemon.type2 ? getTypeClass(pokemon.type2) : '';
+
     detailsDiv.innerHTML = `
         <h2>${pokemon.name}</h2>
         <div class="pokemon-image">
@@ -22,26 +51,31 @@ function displayPokemonDetails(pokemon) {
 
         <!-- Informations de base -->
         <section class="pokemon-stats">
-            <h3>Statistiques</h3>
+            <h3>Statistics</h3>
             <ul>
-                <li><strong>Type:</strong> ${pokemon.type1}${pokemon.type2 ? ' / ' + pokemon.type2 : ''}</li>
+                <li><strong>Type:  </strong> 
+                    ${pokemon.type1 ? `<span class=".type-of-pokemon ${type1Class}">${pokemon.type1}</span>` : ''}
+                    <strong>  /  </strong> 
+                    ${pokemon.type2 ? `<span class=".type-of-pokemon ${type2Class}">${pokemon.type2}</span>` : ''}
+                </li>
+
                 <li><strong>Usage:</strong> ${pokemon.usage}%</li>
-                <li><strong>Viability Ceiling:</strong> ${pokemon.viabilityCeiling && pokemon.viabilityCeiling.length > 0 ? pokemon.viabilityCeiling.join(', ') : 'Non défini'}</li>
-                <li><strong>Happiness:</strong> ${pokemon.stats.happiness || 'Non défini'}</li>
+                <li><strong>Viability Ceiling:</strong> ${pokemon.viabilityCeiling && pokemon.viabilityCeiling.length > 0 ? pokemon.viabilityCeiling.join(', ') : 'Not Defined'}</li>
+                <li><strong>Happiness:</strong> ${pokemon.stats.happiness || 'Not Defined'}</li>
             </ul>
         </section>
 
         <!-- Détails des Statistiques sous forme de barres -->
         <section class="pokemon-detailed-stats">
-            <h3>Détails des Statistiques</h3>
+            <h3>Detailed Stats</h3>
             <ul>
                 ${createStatBar("             HP", pokemon.stats.hp)}
                 ${createStatBar("         Attack", pokemon.stats.attack)}
                 ${createStatBar("        Defense", pokemon.stats.defense)}
-                ${createStatBar(" Special Attack", pokemon.stats.special_attack)}
-                ${createStatBar("Special Defense", pokemon.stats.special_defense)}
+                ${createStatBar(" Special Attack", pokemon.stats.spAtk)}
+                ${createStatBar("Special Defense", pokemon.stats.spDef)}
                 ${createStatBar("          Speed", pokemon.stats.speed)}
-                <li><strong>       Total:</strong> ${pokemon.total}</li>
+                <li><strong>Total:</strong> ${pokemon.total}</li>
             </ul>
         </section>
 
@@ -67,7 +101,7 @@ function displayPokemonDetails(pokemon) {
             <ul>
                 ${Array.isArray(pokemon["Tera Types"]) && pokemon["Tera Types"].length > 0
                     ? pokemon["Tera Types"].map(tera => `<li>${tera}</li>`).join('')
-                    : '<li>Aucun Tera Type disponible</li>'
+                    : '<li>No Tera Types available</li>'
                 }
             </ul>
         </section>
@@ -78,7 +112,7 @@ function displayPokemonDetails(pokemon) {
             <ul>
                 ${Array.isArray(pokemon.teammates) && pokemon.teammates.length > 0
                     ? pokemon.teammates.map(teammate => `<li>${teammate}</li>`).join('')
-                    : '<li>Aucun coéquipier disponible</li>'
+                    : '<li>No teammates available</li>'
                 }
             </ul>
         </section>
@@ -89,7 +123,7 @@ function displayPokemonDetails(pokemon) {
             <ul>
                 ${Array.isArray(pokemon.abilities) && pokemon.abilities.length > 0
                     ? pokemon.abilities.map(ability => `<li>${ability}</li>`).join('')
-                    : '<li>Aucune capacité disponible</li>'
+                    : '<li>No abilities available</li>'
                 }
             </ul>
         </section>
@@ -100,7 +134,7 @@ function displayPokemonDetails(pokemon) {
             <ul>
                 ${Array.isArray(pokemon["Checks and Counters"]) && pokemon["Checks and Counters"].length > 0
                     ? pokemon["Checks and Counters"].map(counter => `<li>${counter}</li>`).join('')
-                    : '<li>Aucun counter disponible</li>'
+                    : '<li>No counters available</li>'
                 }
             </ul>
         </section>
@@ -111,7 +145,7 @@ function displayPokemonDetails(pokemon) {
             <ul>
                 ${Array.isArray(pokemon.moves) && pokemon.moves.length > 0
                     ? pokemon.moves.map(move => `<li>${move}</li>`).join('')
-                    : '<li>Aucun move disponible</li>'
+                    : '<li>No moves available</li>'
                 }
             </ul>
         </section>
