@@ -191,6 +191,7 @@ function sortAndDisplay(data) {
     return '<li>Aucun élément disponible</li>';
 }
 
+
 function createStatBar(label, value) {
     const maxStat = 255; // Valeur maximale pour ajuster la largeur de la barre
     const width = (value / maxStat) * 100; // Calcul de la largeur en pourcentage
@@ -241,3 +242,31 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pokemon-details').innerHTML = '<p>Aucun Pokémon spécifié</p>';
     }
 });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const backButton = document.getElementById('back-button');
+
+    // Ajouter un gestionnaire d'événement pour le bouton retour
+    backButton.addEventListener('click', () => {
+        window.history.back(); // Retourne à la page précédente
+    });
+
+    const pokemonName = getQueryParam('name');
+
+    if (pokemonName) {
+        fetch(`/api/pokemon/${pokemonName.toLowerCase()}`)
+            .then(response => {
+                if (response.ok) return response.json();
+                else throw new Error('Pokémon non trouvé');
+            })
+            .then(pokemon => displayPokemonDetails(pokemon))
+            .catch(error => {
+                console.error(error);
+                document.getElementById('pokemon-details').innerHTML = '<p>Pokémon non trouvé</p>';
+            });
+    } else {
+        document.getElementById('pokemon-details').innerHTML = '<p>Aucun Pokémon spécifié</p>';
+    }
+});
+
