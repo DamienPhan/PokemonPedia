@@ -54,9 +54,8 @@ function displayPokemonDetails(pokemon) {
             <h3>Statistics</h3>
             <ul>
                 <li><strong>Type:  </strong> 
-                    ${pokemon.type1 ? `<span class=".type-of-pokemon ${type1Class}">${pokemon.type1}</span>` : ''}
-                    <strong>  /  </strong> 
-                    ${pokemon.type2 ? `<span class=".type-of-pokemon ${type2Class}">${pokemon.type2}</span>` : ''}
+                    ${pokemon.type1 ? `<span class="type-of-pokemon ${type1Class}">${pokemon.type1}</span>` : ''}
+                    ${pokemon.type2 ? `<strong> / </strong><span class="type-of-pokemon ${type2Class}">${pokemon.type2}</span>` : ''}
                 </li>
                 <li><strong>Usage:</strong> ${(pokemon.usage * 100).toFixed(2)}%</li>
                 <li><strong>Viability Ceiling:</strong> ${pokemon.viabilityCeiling && pokemon.viabilityCeiling.length > 0 ? pokemon.viabilityCeiling.join(', ') : 'Non défini'}</li>
@@ -67,16 +66,17 @@ function displayPokemonDetails(pokemon) {
                 }</li>
             </ul>
         </section>
+
         <!-- Détails des Statistiques sous forme de barres -->
         <section class="pokemon-detailed-stats">
             <h3>Detailed Stats</h3>
             <ul>
-                ${createStatBar("             HP", pokemon.stats.hp)}
-                ${createStatBar("         Attack", pokemon.stats.attack)}
-                ${createStatBar("        Defense", pokemon.stats.defense)}
-                ${createStatBar(" Special Attack", pokemon.stats.spAtk)}
+                ${createStatBar("HP", pokemon.stats.hp)}
+                ${createStatBar("Attack", pokemon.stats.attack)}
+                ${createStatBar("Defense", pokemon.stats.defense)}
+                ${createStatBar("Special Attack", pokemon.stats.spAtk)}
                 ${createStatBar("Special Defense", pokemon.stats.spDef)}
-                ${createStatBar("          Speed", pokemon.stats.speed)}
+                ${createStatBar("Speed", pokemon.stats.speed)}
                 <li><strong>Total:</strong> ${pokemon.total}</li>
             </ul>
         </section>
@@ -101,8 +101,11 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-tera-types">
             <h3>Tera Types</h3>
             <ul>
-                ${Array.isArray(pokemon["Tera Types"]) && pokemon["Tera Types"].length > 0
-                    ? pokemon["Tera Types"].map(tera => `<li>${tera}</li>`).join('')
+                ${pokemon.teraTypes && typeof pokemon.teraTypes === 'object'
+                    ? Object.entries(pokemon.teraTypes)
+                          .sort(([, a], [, b]) => b - a) // Tri décroissant
+                          .map(([type, value]) => `<li>${type}: ${(value * 100).toFixed(2)}%</li>`)
+                          .join('')
                     : '<li>No Tera Types available</li>'
                 }
             </ul>
@@ -112,8 +115,11 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-teammates">
             <h3>Teammates</h3>
             <ul>
-                ${Array.isArray(pokemon.teammates) && pokemon.teammates.length > 0
-                    ? pokemon.teammates.map(teammate => `<li>${teammate}</li>`).join('')
+                ${pokemon.teammates && typeof pokemon.teammates === 'object'
+                    ? Object.entries(pokemon.teammates)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([name, value]) => `<li>${name}: ${(value * 100).toFixed(2)}%</li>`)
+                          .join('')
                     : '<li>No teammates available</li>'
                 }
             </ul>
@@ -123,8 +129,11 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-abilities">
             <h3>Abilities</h3>
             <ul>
-                ${Array.isArray(pokemon.abilities) && pokemon.abilities.length > 0
-                    ? pokemon.abilities.map(ability => `<li>${ability}</li>`).join('')
+                ${pokemon.abilities && typeof pokemon.abilities === 'object'
+                    ? Object.entries(pokemon.abilities)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([ability, value]) => `<li>${ability}: ${(value * 100).toFixed(2)}%</li>`)
+                          .join('')
                     : '<li>No abilities available</li>'
                 }
             </ul>
@@ -134,8 +143,11 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-checks">
             <h3>Checks and Counters</h3>
             <ul>
-                ${Array.isArray(pokemon["Checks and Counters"]) && pokemon["Checks and Counters"].length > 0
-                    ? pokemon["Checks and Counters"].map(counter => `<li>${counter}</li>`).join('')
+                ${pokemon.checksAndCounters && typeof pokemon.checksAndCounters === 'object'
+                    ? Object.entries(pokemon.checksAndCounters)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([counter, value]) => `<li>${counter}: ${(value * 100).toFixed(2)}%</li>`)
+                          .join('')
                     : '<li>No counters available</li>'
                 }
             </ul>
@@ -145,8 +157,11 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-moves">
             <h3>Moves</h3>
             <ul>
-                ${Array.isArray(pokemon.moves) && pokemon.moves.length > 0
-                    ? pokemon.moves.map(move => `<li>${move}</li>`).join('')
+                ${pokemon.moves && typeof pokemon.moves === 'object'
+                    ? Object.entries(pokemon.moves)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([move, value]) => `<li>${move}: ${(value * 100).toFixed(2)}%</li>`)
+                          .join('')
                     : '<li>No moves available</li>'
                 }
             </ul>
@@ -182,12 +197,12 @@ function createStatBar(label, value) {
 
     // Associer des couleurs aux statistiques
     const statColors = {
-        "             HP": "#e74c3c", // Rouge
-        "         Attack": "#f39c12", // Orange
-        "        Defense": "#3498db", // Bleu
-        " Special Attack": "#9b59b6", // Violet
+        "HP": "#e74c3c", // Rouge
+        "Attack": "#f39c12", // Orange
+        "Defense": "#3498db", // Bleu
+        "Special Attack": "#9b59b6", // Violet
         "Special Defense": "#2ecc71", // Vert clair
-        "          Speed": "#e67e22"  // Orange foncé
+        "Speed": "#e67e22"  // Orange foncé
     };
 
     const color = statColors[label] || "#7f8c8d"; // Couleur par défaut : gris
@@ -226,4 +241,3 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pokemon-details').innerHTML = '<p>Aucun Pokémon spécifié</p>';
     }
 });
-
