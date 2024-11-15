@@ -5,12 +5,15 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import explode, col, lower, to_json
 
+# Chemins des fichiers
 smogonPath = "ressources/smogon/gen9vgc2024reghbo3-1760.json"
 pokedexPath = "ressources/pokedex/pokedex.csv"
 dataPath = "ressources/data_output"
 
-spark = SparkSession.builder.appName("Pokemon Join").getOrCreate()
+# Initialisation de la session Spark
+spark = SparkSession.builder.appName("Pokemon Create JSON").getOrCreate()
 
+# Schéma du fichier JSON
 schema = StructType([
     StructField("info", StructType([
         StructField("team type", StringType(), True),
@@ -34,14 +37,17 @@ schema = StructType([
     ]), True))
 ])
 
+# Lecture des fichiers
 df_json = spark.read.schema(schema).json(smogonPath)
+df_csv = spark.read.csv(pokedexPath, header=True, inferSchema=True)
 
-df_data = df_json.select(
-    explode("data").alias("Name", "Details")
-)
+# Harmonisation des noms
+df_csv = df_csv.withColumn("Name", lower(col("Name")))
+df_data = df_json.select(explode("data").alias("PName", "Details"))
 
+# Extraction des colonnes JSON
 df_details = df_data.select(
-    col("Name").alias("PName"),
+    col("PName"),
     col("Details").getItem("Items").alias("Items"),
     col("Details").getItem("Raw count").alias("Raw count"),
     col("Details").getItem("Spreads").alias("Spreads"),
@@ -55,15 +61,10 @@ df_details = df_data.select(
     col("Details").getItem("Happiness").alias("Happiness")
 )
 
-df_csv = spark.read.csv(pokedexPath, header=True, inferSchema=True)
-df_csv = df_csv.withColumn("Name", lower(col("Name")))
+# Jointure JSON-CSV sur le nom
+df_joined = df_details.join(df_csv, lower(col("PName")) == col("Name"), "inner").drop("Name")
 
-df_joined = df_details.join(df_csv, lower(col("PName")) == col("Name"), "inner")
-df_joined = df_joined.withColumn("Items", to_json(col("Items")))
-
-# Supprimer la colonne Name
-df_joined = df_joined.drop("Name")
-
+# Nom du fichier de sortie basé sur le nom du fichier source
 input_file_name = os.path.splitext(os.path.basename(smogonPath))[0]
 
 # Chemin temporaire pour sauver le fichier
@@ -73,22 +74,23 @@ df_joined.coalesce(1).write.json(temp_output_path, mode="overwrite")
 # Trouver le fichier JSON créé
 temp_file = [f for f in os.listdir(temp_output_path) if f.endswith(".json")][0]
 
-# Créer un répertoire temporaire
-os.makedirs(temp_output_path, exist_ok=True)
-
 # Collecter les résultats sous forme de liste de dictionnaires
 results = df_joined.collect()
 
-
+# Création du chemin final pour le fichier
 final_output_path = f"{dataPath}/{input_file_name}_joined.json"
-with open(final_output_path, 'w') as json_file:
-    json_file.write('[')  
-    for i, row in enumerate(results):
-        json.dump(row.asDict(), json_file)  
-        if i < len(results) - 1:
-            json_file.write(',')
-    json_file.write(']')  
 
+# Écriture dans un fichier JSON
+with open(final_output_path, 'w') as json_file:
+    json_file.write('[')  # Début du tableau JSON
+    for i, row in enumerate(results):
+        json.dump(row.asDict(), json_file)  # Conversion en dictionnaire
+        if i < len(results) - 1:
+            json_file.write(',')  # Ajouter une virgule entre les objets
+    json_file.write(']')  # Fin du tableau JSON
+
+# Nettoyage du répertoire temporaire
 shutil.rmtree(temp_output_path)
 
+# Arrêt de la session Spark
 spark.stop()

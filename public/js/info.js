@@ -25,11 +25,19 @@ function displayPokemonDetails(pokemon) {
             <h3>Statistiques</h3>
             <ul>
                 <li><strong>Type:</strong> ${pokemon.type1}${pokemon.type2 ? ' / ' + pokemon.type2 : ''}</li>
-                <li><strong>Usage:</strong> ${pokemon.usage}%</li>
+                <li><strong>Usage:</strong> ${(pokemon.usage * 100).toFixed(2)}%</li>
                 <li><strong>Viability Ceiling:</strong> ${pokemon.viabilityCeiling && pokemon.viabilityCeiling.length > 0 ? pokemon.viabilityCeiling.join(', ') : 'Non défini'}</li>
-                <li><strong>Happiness:</strong> ${pokemon.stats.happiness || 'Non défini'}</li>
+                <li><strong>Happiness:</strong> ${
+    pokemon.happiness && pokemon.happiness['255'] !== undefined
+        ? pokemon.happiness['255'].toFixed(2)
+        : 'Non défini'
+}</li>
+
+
             </ul>
         </section>
+
+
 
         <!-- Détails des Statistiques sous forme de barres -->
         <section class="pokemon-detailed-stats">
@@ -38,8 +46,8 @@ function displayPokemonDetails(pokemon) {
                 ${createStatBar("             HP", pokemon.stats.hp)}
                 ${createStatBar("         Attack", pokemon.stats.attack)}
                 ${createStatBar("        Defense", pokemon.stats.defense)}
-                ${createStatBar(" Special Attack", pokemon.stats.special_attack)}
-                ${createStatBar("Special Defense", pokemon.stats.special_defense)}
+                ${createStatBar(" Special Attack", pokemon.stats.spAtk)}
+                ${createStatBar("Special Defense", pokemon.stats.spDef)}
                 ${createStatBar("          Speed", pokemon.stats.speed)}
                 <li><strong>       Total:</strong> ${pokemon.total}</li>
             </ul>
@@ -178,7 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) return response.json();
                 else throw new Error('Pokémon non trouvé');
             })
-            .then(pokemon => displayPokemonDetails(pokemon))
+            .then(pokemon => {
+                console.log('Données reçues du serveur:', pokemon); // Log pour vérification
+                displayPokemonDetails(pokemon);
+            })
             .catch(error => {
                 console.error(error);
                 document.getElementById('pokemon-details').innerHTML = '<p>Pokémon non trouvé</p>';
@@ -187,3 +198,4 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pokemon-details').innerHTML = '<p>Aucun Pokémon spécifié</p>';
     }
 });
+

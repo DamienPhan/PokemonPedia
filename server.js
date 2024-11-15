@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -13,29 +12,29 @@ app.use(express.json());
 
 // Configurer les dossiers statiques pour `public` et `ressources`
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/ressources', express.static(path.join(__dirname, 'ressources'))); // Ajout de `ressources`
+app.use('/ressources', express.static(path.join(__dirname, 'ressources')));
 
-// Connexion à MongoDB avec Mongoose
+// Connexion à MongoDB
 const mongoURI = 'mongodb://localhost:27017/PokemonDB';
 
 mongoose.connect(mongoURI)
     .then(() => console.log("Connecté à MongoDB"))
     .catch(err => console.error("Erreur de connexion à MongoDB :", err));
 
-// Définition du modèle Pokémon, spécifiant ici la collection 'PokemonData'
+// Définition du modèle Pokémon
 const pokemonSchema = new mongoose.Schema({
     PName: String,
-    Items: String,
+    Items: Object, 
     "Raw count": Number,
-    Spreads: Object,
+    Spreads: Object, 
     "Tera Types": Object,
-    Teammates: Object,
-    "Viability Ceiling": [Number], // Corrigé pour être un tableau
-    Abilities: Object,
-    "Checks and Counters": [String],
+    Teammates: Object, 
+    "Viability Ceiling": [Number],
+    Abilities: Object, 
+    "Checks and Counters": Object,
     usage: Number,
-    Moves: Object, // Ajusté pour être un objet si Moves est stocké ainsi
-    Happiness: Number,
+    Moves: Object, 
+    Happiness: Object, 
     Image: String,
     Index: Number,
     "Type 1": String,
@@ -44,14 +43,14 @@ const pokemonSchema = new mongoose.Schema({
     HP: Number,
     Attack: Number,
     Defense: Number,
-    "SP. Atk.": Number,
-    "SP. Def": Number,
+    SpAtk: Number,
+    SpDef: Number,
     Speed: Number
 }, { collection: 'PokemonData' });
 
 const Pokemon = mongoose.model('Pokemon', pokemonSchema);
 
-// Route pour récupérer les informations d'un Pokémon depuis MongoDB
+
 app.get('/api/pokemon/:name', async (req, res) => {
     const pokemonName = req.params.name.toLowerCase();
 
@@ -59,32 +58,32 @@ app.get('/api/pokemon/:name', async (req, res) => {
         const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
 
         if (pokemon) {
-            // Formater la réponse et assurer que toutes les valeurs sont correctement traitées
+            console.log('Données Pokémon récupérées depuis MongoDB:', pokemon); // Log pour vérifier les données
             res.json({
                 name: pokemon.PName,
-                items: pokemon.Items ? JSON.parse(pokemon.Items) : {}, // Si "Items" est une chaîne, la parser en objet
-                rawCount: pokemon['Raw count'] || 0, // Valeur par défaut si non définie
-                spreads: pokemon.Spreads || {}, // Valeur par défaut si non définie
-                teraTypes: Array.isArray(pokemon["Tera Types"]) ? pokemon["Tera Types"] : [], // Vérifier si c'est un tableau
-                teammates: pokemon.Teammates || [], // Valeur par défaut si non définie
-                viabilityCeiling: Array.isArray(pokemon["Viability Ceiling"]) ? pokemon["Viability Ceiling"] : [], // Vérifier si c'est un tableau
-                abilities: pokemon.Abilities || {}, // Valeur par défaut si non définie
-                checksAndCounters: pokemon["Checks and Counters"] || [], // Valeur par défaut si non définie
-                usage: pokemon.usage || 0, // Valeur par défaut si non définie
-                moves: pokemon.Moves || {}, // Valeur par défaut si non définie
-                happiness: pokemon.Happiness || 0, // Valeur par défaut si non définie
-                image: pokemon.Image || '', // Valeur par défaut si non définie
-                index: pokemon.Index || 0, // Valeur par défaut si non définie
-                type1: pokemon['Type 1'] || '', // Valeur par défaut si non définie
-                type2: pokemon['Type 2'] || '', // Valeur par défaut si non définie
-                total: pokemon.Total || 0, // Valeur par défaut si non définie
+                items: pokemon.Items || {},
+                rawCount: pokemon["Raw count"] || 0,
+                spreads: pokemon.Spreads || {},
+                teraTypes: pokemon["Tera Types"] || {},
+                teammates: pokemon.Teammates || {},
+                viabilityCeiling: pokemon["Viability Ceiling"] || [],
+                abilities: pokemon.Abilities || {},
+                checksAndCounters: pokemon["Checks and Counters"] || {},
+                usage: pokemon.usage || 0,
+                moves: pokemon.Moves || {},
+                happiness: pokemon.Happiness || {}, // Champ Happiness transmis directement
+                image: pokemon.Image || '',
+                index: pokemon.Index || 0,
+                type1: pokemon["Type 1"] || '',
+                type2: pokemon["Type 2"] || '',
+                total: pokemon.Total || 0,
                 stats: {
-                    hp: pokemon.HP || 0, // Valeur par défaut si non définie
-                    attack: pokemon.Attack || 0, // Valeur par défaut si non définie
-                    defense: pokemon.Defense || 0, // Valeur par défaut si non définie
-                    spAtk: pokemon['SP. Atk.'] || 0, // Valeur par défaut si non définie
-                    spDef: pokemon['SP. Def'] || 0, // Valeur par défaut si non définie
-                    speed: pokemon.Speed || 0 // Valeur par défaut si non définie
+                    hp: pokemon.HP || 0,
+                    attack: pokemon.Attack || 0,
+                    defense: pokemon.Defense || 0,
+                    spAtk: pokemon.SpAtk || 0,
+                    spDef: pokemon.SpDef || 0,
+                    speed: pokemon.Speed || 0
                 }
             });
         } else {
@@ -95,6 +94,9 @@ app.get('/api/pokemon/:name', async (req, res) => {
         res.status(500).send('Erreur serveur');
     }
 });
+
+
+
 
 // Démarrer le serveur
 app.listen(PORT, () => {
