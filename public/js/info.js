@@ -103,8 +103,8 @@ function displayPokemonDetails(pokemon) {
             <ul>
                 ${pokemon.teraTypes && typeof pokemon.teraTypes === 'object'
                     ? Object.entries(pokemon.teraTypes)
-                          .sort(([, a], [, b]) => b - a) // Tri décroissant
-                          .map(([type, value]) => `<li>${type}: ${(value * 100).toFixed(2)}%</li>`)
+                          .sort(([, a], [, b]) => b - a) 
+                          .map(([type, value]) => `<li>${type}: ${(value / 100).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No Tera Types available</li>'
                 }
@@ -118,7 +118,7 @@ function displayPokemonDetails(pokemon) {
                 ${pokemon.teammates && typeof pokemon.teammates === 'object'
                     ? Object.entries(pokemon.teammates)
                           .sort(([, a], [, b]) => b - a)
-                          .map(([name, value]) => `<li>${name}: ${(value * 100).toFixed(2)}%</li>`)
+                          .map(([name, value]) => `<li>${name}: ${(value / 1000).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No teammates available</li>'
                 }
@@ -132,7 +132,7 @@ function displayPokemonDetails(pokemon) {
                 ${pokemon.abilities && typeof pokemon.abilities === 'object'
                     ? Object.entries(pokemon.abilities)
                           .sort(([, a], [, b]) => b - a)
-                          .map(([ability, value]) => `<li>${ability}: ${(value * 100).toFixed(2)}%</li>`)
+                          .map(([ability, value]) => `<li>${ability}: ${(value / 10000).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No abilities available</li>'
                 }
@@ -146,7 +146,7 @@ function displayPokemonDetails(pokemon) {
                 ${pokemon.checksAndCounters && typeof pokemon.checksAndCounters === 'object'
                     ? Object.entries(pokemon.checksAndCounters)
                           .sort(([, a], [, b]) => b - a)
-                          .map(([counter, value]) => `<li>${counter}: ${(value * 100).toFixed(2)}%</li>`)
+                          .map(([counter, value]) => `<li>${counter}: ${(value / 1000).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No counters available</li>'
                 }
@@ -160,7 +160,7 @@ function displayPokemonDetails(pokemon) {
                 ${pokemon.moves && typeof pokemon.moves === 'object'
                     ? Object.entries(pokemon.moves)
                           .sort(([, a], [, b]) => b - a)
-                          .map(([move, value]) => `<li>${move}: ${(value * 100).toFixed(2)}%</li>`)
+                          .map(([move, value]) => `<li>${move}: ${(value / 1000).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No moves available</li>'
                 }
