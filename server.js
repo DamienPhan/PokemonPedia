@@ -98,28 +98,28 @@ app.get('/api/pokemon/:name', async (req, res) => {
     }
 });
 
-
-
-
 // Démarrer le serveur
 app.listen(PORT, () => {
     console.log(`Serveur en écoute sur le port ${PORT}`);
 });
 
-// Route pour rechercher des Pokémon par nom partiel
 app.get('/api/pokemon/suggestions/:query', async (req, res) => {
     const query = req.params.query.toLowerCase();
 
     try {
-        // Recherche des noms de Pokémon contenant le texte de la requête
+        // Recherche des Pokémon correspondant au texte de la requête
         const suggestions = await Pokemon.find(
-            { PName: { $regex: query, $options: 'i' } }, // Recherche insensible à la casse
-            { PName: 1, _id: 0 } // Renvoyer uniquement les noms des Pokémon
+            { PName: { $regex: query, $options: 'i' } }, // Insensible à la casse
+            { PName: 1, Image: 1, _id: 0 } // Renvoyer `PName` et `Image`
         ).limit(10); // Limiter à 10 résultats
 
-        // Formater les noms pour le front-end
-        const pokemonNames = suggestions.map(p => cleanString(p.PName));
-        res.json(pokemonNames);
+        // Formater les résultats pour le front-end
+        const pokemonData = suggestions.map(p => ({
+            name: p.PName, // Utiliser directement le nom brut
+            image: p.Image || 'default.png' // Fallback à une image par défaut
+        }));
+
+        res.json(pokemonData);
     } catch (error) {
         console.error('Erreur lors de la récupération des suggestions:', error);
         res.status(500).send('Erreur serveur');

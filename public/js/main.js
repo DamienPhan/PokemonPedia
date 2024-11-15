@@ -9,7 +9,7 @@ function searchPokemon() {
     }
 
     // Appeler l'API pour obtenir les suggestions de Pokémon
-    fetch('/api/pokemon/suggestions/' + query)
+    fetch(`/api/pokemon/suggestions/${query}`)
         .then(response => {
             if (response.ok) {
                 return response.json();
@@ -18,14 +18,14 @@ function searchPokemon() {
             }
         })
         .then(suggestions => {
-            // Générer la liste des suggestions avec images et noms
-            suggestionsBox.innerHTML = suggestions.map(name => 
-                `<li onclick="selectPokemon('${name}')">
-                    <img src="/ressources/pokedex/${name.toLowerCase()}.png" 
-                         alt="${name}" 
+            // Afficher les suggestions dans le DOM
+            suggestionsBox.innerHTML = suggestions.map(pokemon =>
+                `<li onclick="selectPokemon('${pokemon.name}')">
+                    <img src="/ressources/pokedex/${pokemon.image}" 
+                         alt="${pokemon.name}" 
                          style="width: 50px; height: 50px; margin-right: 10px;" 
                          onerror="this.src='/ressources/pokedex/default.png';" />
-                    ${name}
+                    ${pokemon.name}
                 </li>`
             ).join('');
         })

@@ -61,17 +61,12 @@ function displayPokemonDetails(pokemon) {
                 <li><strong>Usage:</strong> ${(pokemon.usage * 100).toFixed(2)}%</li>
                 <li><strong>Viability Ceiling:</strong> ${pokemon.viabilityCeiling && pokemon.viabilityCeiling.length > 0 ? pokemon.viabilityCeiling.join(', ') : 'Non défini'}</li>
                 <li><strong>Happiness:</strong> ${
-    pokemon.happiness && pokemon.happiness['255'] !== undefined
-        ? pokemon.happiness['255'].toFixed(2)
-        : 'Non défini'
-}</li>
-
-
+                pokemon.happiness && pokemon.happiness['255'] !== undefined
+                    ? pokemon.happiness['255'].toFixed(2)
+                    : 'Non défini'
+                }</li>
             </ul>
         </section>
-
-
-
         <!-- Détails des Statistiques sous forme de barres -->
         <section class="pokemon-detailed-stats">
             <h3>Detailed Stats</h3>
