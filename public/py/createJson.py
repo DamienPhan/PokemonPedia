@@ -6,7 +6,7 @@ from pyspark.sql.types import *
 from pyspark.sql.functions import explode, col, lower, to_json
 
 # Chemins des fichiers
-smogonPath = "ressources/smogon/gen9vgc2024reghbo3-1760.json"
+smogonPath = "ressources/smogon/gen9ubers.json"
 pokedexPath = "ressources/pokedex/pokedex.csv"
 dataPath = "ressources/data_output"
 
@@ -78,7 +78,7 @@ temp_file = [f for f in os.listdir(temp_output_path) if f.endswith(".json")][0]
 results = df_joined.collect()
 
 # Création du chemin final pour le fichier
-final_output_path = f"{dataPath}/{input_file_name}_joined.json"
+final_output_path = f"{dataPath}/{input_file_name}.json"
 
 # Écriture dans un fichier JSON
 with open(final_output_path, 'w') as json_file:
