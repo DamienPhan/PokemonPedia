@@ -1,4 +1,4 @@
-/* Applique le thème sombre */
+/* Thème sombre */
 .theme--dark {
     --theme-bg-color: rgb(34, 34, 34);
     --theme-odd-color: rgb(29, 29, 29);
@@ -90,17 +90,72 @@ ul li:hover {
 }
 
 /* Stats & Data */
-.pokemon-stats ul, .pokemon-detailed-stats ul {
+.pokemon-stats ul {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
 }
 
-.pokemon-stats li, .pokemon-detailed-stats li {
+.pokemon-stats li {
     background: var(--theme-bg-search);
     padding: 10px;
     border-radius: 5px;
     border: 1px solid var(--theme-border-color);
+}
+
+/* Liste des statistiques détaillées pour une seule colonne */
+.pokemon-detailed-stats ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-direction: column; /* Disposition en colonne */
+    gap: 15px; /* Espacement entre chaque statistique */
+}
+
+/* Chaque statistique occupe une ligne */
+.stat-item {
+    display: flex;
+    flex-direction: column; /* Aligne le label et la barre en colonne */
+}
+
+/* Label des statistiques */
+.stat-label {
+    margin-bottom: 5px; /* Espacement entre le label et la barre */
+    color: var(--theme-text-color);
+    font-size: 1em;
+}
+
+/* Barre de statistique */
+.stat-bar {
+    height: 20px;
+    border-radius: 5px;
+    display: inline-block;
+    position: relative;
+    color: #fff;
+    background-color: #f0f0f0;
+    text-align: center;
+    overflow: hidden; /* Coupe tout débordement */
+    line-height: 16px;
+    margin: 5px 0 5px 5px;
+    padding: 2px; /* Ajoute un léger espace interne */
+}
+
+/* Remplissage de la barre */
+.stat-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.4s ease-in-out;
+}
+
+/* Valeur affichée */
+.stat-value {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    color: #fff;
+    line-height: 20px;
+    font-size: 0.9em;
+    text-shadow: 1px 1px 2px #000;
 }
 
 /* Formatting Specific Items */
@@ -125,7 +180,6 @@ a:hover {
     text-decoration: underline;
 }
 
-/* For smoother transitions */
 section {
     transition: background-color 0.3s, box-shadow 0.3s ease;
 }
@@ -133,4 +187,21 @@ section {
 section:hover {
     background-color: var(--theme-bg-search-2);
     box-shadow: 0 4px 8px var(--theme-shadow-color);
+}
+
+/* Style global pour les contenuers */
+.pokemon-spreads {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.pokemon-items ul {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Crée deux colonnes égales */
+    gap: 10px; /* Espace entre les éléments */
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }

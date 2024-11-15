@@ -29,7 +29,7 @@ const pokemonSchema = new mongoose.Schema({
     "Raw count": Number,
     Spreads: Object,
     "Tera Types": Object,
-    Teammates: [String],
+    Teammates: Object,
     "Viability Ceiling": [Number], // Corrigé pour être un tableau
     Abilities: Object,
     "Checks and Counters": [String],
@@ -59,31 +59,32 @@ app.get('/api/pokemon/:name', async (req, res) => {
         const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
 
         if (pokemon) {
+            // Formater la réponse et assurer que toutes les valeurs sont correctement traitées
             res.json({
                 name: pokemon.PName,
-                items: JSON.parse(pokemon.Items || '{}'), // Corrigé pour parser JSON
-                rawCount: pokemon["Raw count"],
-                spreads: pokemon.Spreads,
-                teraTypes: pokemon["Tera Types"],
-                teammates: pokemon.Teammates || [], // Précaution si non défini
-                viabilityCeiling: pokemon["Viability Ceiling"] || [], // Assurer que c'est un tableau
-                abilities: pokemon.Abilities,
-                checksAndCounters: pokemon["Checks and Counters"] || [], // Précaution si non défini
-                usage: pokemon.usage,
-                moves: pokemon.Moves || {}, // Assurer que moves est un objet
-                happiness: pokemon.Happiness,
-                image: pokemon.Image,
-                index: pokemon.Index,
-                type1: pokemon["Type 1"],
-                type2: pokemon["Type 2"],
-                total: pokemon.Total,
+                items: pokemon.Items ? JSON.parse(pokemon.Items) : {}, // Si "Items" est une chaîne, la parser en objet
+                rawCount: pokemon['Raw count'] || 0, // Valeur par défaut si non définie
+                spreads: pokemon.Spreads || {}, // Valeur par défaut si non définie
+                teraTypes: Array.isArray(pokemon["Tera Types"]) ? pokemon["Tera Types"] : [], // Vérifier si c'est un tableau
+                teammates: pokemon.Teammates || [], // Valeur par défaut si non définie
+                viabilityCeiling: Array.isArray(pokemon["Viability Ceiling"]) ? pokemon["Viability Ceiling"] : [], // Vérifier si c'est un tableau
+                abilities: pokemon.Abilities || {}, // Valeur par défaut si non définie
+                checksAndCounters: pokemon["Checks and Counters"] || [], // Valeur par défaut si non définie
+                usage: pokemon.usage || 0, // Valeur par défaut si non définie
+                moves: pokemon.Moves || {}, // Valeur par défaut si non définie
+                happiness: pokemon.Happiness || 0, // Valeur par défaut si non définie
+                image: pokemon.Image || '', // Valeur par défaut si non définie
+                index: pokemon.Index || 0, // Valeur par défaut si non définie
+                type1: pokemon['Type 1'] || '', // Valeur par défaut si non définie
+                type2: pokemon['Type 2'] || '', // Valeur par défaut si non définie
+                total: pokemon.Total || 0, // Valeur par défaut si non définie
                 stats: {
-                    hp: pokemon.HP,
-                    attack: pokemon.Attack,
-                    defense: pokemon.Defense,
-                    spAtk: pokemon["SP. Atk."],
-                    spDef: pokemon["SP. Def"],
-                    speed: pokemon.Speed,
+                    hp: pokemon.HP || 0, // Valeur par défaut si non définie
+                    attack: pokemon.Attack || 0, // Valeur par défaut si non définie
+                    defense: pokemon.Defense || 0, // Valeur par défaut si non définie
+                    spAtk: pokemon['SP. Atk.'] || 0, // Valeur par défaut si non définie
+                    spDef: pokemon['SP. Def'] || 0, // Valeur par défaut si non définie
+                    speed: pokemon.Speed || 0 // Valeur par défaut si non définie
                 }
             });
         } else {
