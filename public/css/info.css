@@ -239,11 +239,19 @@ section:hover {
 }
 
 .type-electric {
-    color: #f39c12;
+    color: #dec224;
     border: 2px solid #f39c12;
     padding: 2px 6px;
     border-radius: 5px;
 }
+
+.type-ground {
+    color: rgb(205, 140, 35);
+    border: 2px solid rgb(205, 140, 35);
+    padding: 2px 6px;
+    border-radius: 5px;
+}
+
 
 .type-poison {
     color: #9b59b6;
@@ -253,8 +261,8 @@ section:hover {
 }
 
 .type-bug {
-    color: #2c3e50;
-    border: 2px solid #2c3e50;
+    color: #317040;
+    border: 2px solid #317040;
     padding: 2px 6px;
     border-radius: 5px;
 }
@@ -267,8 +275,8 @@ section:hover {
 }
 
 .type-psychic {
-    color: #8e44ad;
-    border: 2px solid #8e44ad;
+    color: #b16dce;
+    border: 2px solid #b16dce;
     padding: 2px 6px;
     border-radius: 5px;
 }
@@ -281,15 +289,15 @@ section:hover {
 }
 
 .type-fairy {
-    color: #f1c40f;
-    border: 2px solid #f1c40f;
+    color: #ff9de3;
+    border: 2px solid #ff9de3;
     padding: 2px 6px;
     border-radius: 5px;
 }
 
 .type-rock {
-    color: #7f8c8d;
-    border: 2px solid #7f8c8d;
+    color: #cd8c13;
+    border: 2px solid #cd8c13;
     padding: 2px 6px;
     border-radius: 5px;
 }
@@ -302,15 +310,15 @@ section:hover {
 }
 
 .type-ice {
-    color: #1abc9c;
-    border: 2px solid #1abc9c;
+    color: #85f7ff;
+    border: 2px solid #85f7ff;
     padding: 2px 6px;
     border-radius: 5px;
 }
 
 .type-dragon {
-    color: #e67e22;
-    border: 2px solid #e67e22;
+    color: #2229e6;
+    border: 2px solid #2229e6;
     padding: 2px 6px;
     border-radius: 5px;
 }
@@ -341,5 +349,21 @@ section:hover {
     border: 2px solid #95a5a6;
     padding: 2px 6px;
     border-radius: 5px;
+}
+
+.pokemon-tera-types-chart {
+    margin-top: 20px;
+    text-align: center; /* Centre le contenu en texte */
+    display: flex; /* Utilisation de Flexbox pour le centrage */
+    justify-content: center; /* Centre horizontalement */
+    align-items: center; /* Centre verticalement */
+    flex-direction: column; /* S'assure que les éléments s'empilent verticalement */
+}
+
+canvas {
+    max-width: 50%; /* Limite la largeur à 50% du conteneur parent */
+    height: auto; /* Garde les proportions */
+    display: block; /* Supprime tout espacement supplémentaire dû au mode inline par défaut */
+    margin: 0 auto; /* Centre l'élément en mode block */
 }
 

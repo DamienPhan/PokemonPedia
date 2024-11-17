@@ -4,11 +4,10 @@ function getQueryParam(param) {
     return urlParams.get(param);
 }
 
-// Fonction pour afficher les informations du Pokémon
 function displayPokemonDetails(pokemon) {
     const detailsDiv = document.getElementById('pokemon-details');
 
-    // Vérifiez si le Pokémon contient bien les propriétés nécessaires
+    // Vérifiez si les données du Pokémon sont valides
     if (!pokemon) {
         detailsDiv.innerHTML = '<p>Pokémon non trouvé</p>';
         return;
@@ -34,15 +33,17 @@ function displayPokemonDetails(pokemon) {
             'dark': 'type-dark',
             'steel': 'type-steel',
             'flying': 'type-flying',
+            'ground': 'type-ground',
             'unknown': 'type-unknown'
         };
-        return typeClasses[type.toLowerCase()] || 'type-unknown'; // Default to 'unknown' if type not found
+        return typeClasses[type.toLowerCase()] || 'type-unknown';
     }
 
     // Appel de la fonction getTypeClass pour obtenir les classes CSS des types
     const type1Class = getTypeClass(pokemon.type1);
     const type2Class = pokemon.type2 ? getTypeClass(pokemon.type2) : '';
 
+    // Mise à jour du conteneur principal avec les détails
     detailsDiv.innerHTML = `
         <h2>${pokemon.name}</h2>
         <div class="pokemon-image">
@@ -67,7 +68,7 @@ function displayPokemonDetails(pokemon) {
             </ul>
         </section>
 
-        <!-- Détails des Statistiques sous forme de barres -->
+        <!-- Détails des statistiques -->
         <section class="pokemon-detailed-stats">
             <h3>Detailed Stats</h3>
             <ul>
@@ -94,20 +95,6 @@ function displayPokemonDetails(pokemon) {
             <h3>Spreads</h3>
             <ul>
                 ${sortAndDisplay(pokemon.spreads)}
-            </ul>
-        </section>
-
-        <!-- Tera Types -->
-        <section class="pokemon-tera-types">
-            <h3>Tera Types</h3>
-            <ul>
-                ${pokemon.teraTypes && typeof pokemon.teraTypes === 'object'
-                    ? Object.entries(pokemon.teraTypes)
-                          .sort(([, a], [, b]) => b - a) // Tri décroissant
-                          .map(([type, value]) => `<li>${type}: ${(value * 100).toFixed(2)}%</li>`)
-                          .join('')
-                    : '<li>No Tera Types available</li>'
-                }
             </ul>
         </section>
 
@@ -139,20 +126,6 @@ function displayPokemonDetails(pokemon) {
             </ul>
         </section>
 
-        <!-- Checks and Counters -->
-        <section class="pokemon-checks">
-            <h3>Checks and Counters</h3>
-            <ul>
-                ${pokemon.checksAndCounters && typeof pokemon.checksAndCounters === 'object'
-                    ? Object.entries(pokemon.checksAndCounters)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([counter, value]) => `<li>${counter}: ${(value * 100).toFixed(2)}%</li>`)
-                          .join('')
-                    : '<li>No counters available</li>'
-                }
-            </ul>
-        </section>
-
         <!-- Moves -->
         <section class="pokemon-moves">
             <h3>Moves</h3>
@@ -167,7 +140,15 @@ function displayPokemonDetails(pokemon) {
             </ul>
         </section>
     `;
+
+    // Créez un camembert des Tera Types s'ils existent
+    if (pokemon.teraTypes && Object.keys(pokemon.teraTypes).length > 0) {
+        createTeraTypesChart(pokemon.teraTypes);
+    } else {
+        document.querySelector('.pokemon-tera-types-chart').innerHTML = '<p>No Tera Types data available</p>';
+    }
 }
+
 
 // Fonction pour trier et afficher les 10 premiers éléments d'une liste d'items, spreads, etc.
 function sortAndDisplay(data) {
@@ -217,6 +198,57 @@ function createStatBar(label, value) {
             </div>
         </li>
     `;
+}
+
+function createTeraTypesChart(teraTypes) {
+    const ctx = document.getElementById('teraTypesChart').getContext('2d');
+
+    const labels = Object.keys(teraTypes);
+    const rawData = Object.values(teraTypes);
+
+    // Calcul de la somme des valeurs pour normaliser
+    const total = rawData.reduce((sum, value) => sum + value, 0);
+    const data = rawData.map(value => (value / total) * 100); // Normaliser pour que la somme fasse 100%
+
+    // Fonction pour extraire la couleur définie dans le CSS d'une classe
+    function getColorFromCSS(typeClass) {
+        const tempElement = document.createElement('div');
+        tempElement.className = `type-${typeClass.toLowerCase()}`;
+        document.body.appendChild(tempElement);
+        const color = window.getComputedStyle(tempElement).color;
+        document.body.removeChild(tempElement);
+        return color;
+    }
+
+    // Récupérer les couleurs associées à chaque type
+    const colors = labels.map(label => getColorFromCSS(label));
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors // Utiliser les couleurs dynamiques
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            const value = tooltipItem.raw.toFixed(2);
+                            return `${tooltipItem.label}: ${value}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Récupérer et afficher les détails du Pokémon lorsque la page est chargée
