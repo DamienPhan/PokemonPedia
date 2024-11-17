@@ -105,7 +105,7 @@ function displayPokemonDetails(pokemon) {
                 ${pokemon.teammates && typeof pokemon.teammates === 'object'
                     ? Object.entries(pokemon.teammates)
                           .sort(([, a], [, b]) => b - a)
-                          .map(([name, value]) => `<li>${name}: ${(value * 100).toFixed(2)}%</li>`)
+                          .map(([name, value]) => `<li>${name}: ${(value / 1000).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No teammates available</li>'
                 }
@@ -119,9 +119,23 @@ function displayPokemonDetails(pokemon) {
                 ${pokemon.abilities && typeof pokemon.abilities === 'object'
                     ? Object.entries(pokemon.abilities)
                           .sort(([, a], [, b]) => b - a)
-                          .map(([ability, value]) => `<li>${ability}: ${(value * 100).toFixed(2)}%</li>`)
+                          .map(([ability, value]) => `<li>${ability}: ${(value / 10000).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No abilities available</li>'
+                }
+            </ul>
+        </section>
+
+        <!-- Checks and Counters -->
+        <section class="pokemon-checks">
+            <h3>Checks and Counters</h3>
+            <ul>
+                ${pokemon.checksAndCounters && typeof pokemon.checksAndCounters === 'object'
+                    ? Object.entries(pokemon.checksAndCounters)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([counter, value]) => `<li>${counter}: ${(value * 100).toFixed(2)}%</li>`)
+                          .join('')
+                    : '<li>No counters available</li>'
                 }
             </ul>
         </section>
@@ -133,7 +147,7 @@ function displayPokemonDetails(pokemon) {
                 ${pokemon.moves && typeof pokemon.moves === 'object'
                     ? Object.entries(pokemon.moves)
                           .sort(([, a], [, b]) => b - a)
-                          .map(([move, value]) => `<li>${move}: ${(value * 100).toFixed(2)}%</li>`)
+                          .map(([move, value]) => `<li>${move}: ${(value / 1000).toFixed(2)}%</li>`)
                           .join('')
                     : '<li>No moves available</li>'
                 }

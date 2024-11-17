@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Chemin relatif pour remonter de deux niveaux
-final_output_path = Path("ressources/data_output/gen9vgc2024reghbo3-1760_joined.json")
+final_output_path = Path("ressources/data_output/gen9ubers.json")
 
 # Vérification si le fichier JSON existe
 if not final_output_path.exists():
