@@ -102,15 +102,19 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-teammates">
             <h3>Teammates</h3>
             <ul>
-                ${pokemon.teammates && typeof pokemon.teammates === 'object'
-                    ? Object.entries(pokemon.teammates)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([name, value]) => `<li>${name}: ${(value / 1000).toFixed(2)}%</li>`)
-                          .join('')
-                    : '<li>No teammates available</li>'
+                <!-- Les teammates seront insérés dynamiquement -->
+                ${pokemon.teammates && pokemon.teammates.length > 0 
+                    ? pokemon.teammates.map(teammate => `
+                        <li>
+                            <img src="${teammate.image}" alt="${teammate.name}" />
+                            <span>${teammate.name}: ${(teammate.value * 100).toFixed(2)}%</span>
+                        </li>
+                    `).join('')
+                    : '<li>Aucun teammate disponible</li>'
                 }
             </ul>
         </section>
+
 
         <!-- Abilities -->
         <section class="pokemon-abilities">
@@ -118,24 +122,10 @@ function displayPokemonDetails(pokemon) {
             <ul>
                 ${pokemon.abilities && typeof pokemon.abilities === 'object'
                     ? Object.entries(pokemon.abilities)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([ability, value]) => `<li>${ability}: ${(value / 10000).toFixed(2)}%</li>`)
-                          .join('')
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([ability, value]) => `<li>${ability}: ${(value / 10000).toFixed(2)}%</li>`)
+                        .join('')
                     : '<li>No abilities available</li>'
-                }
-            </ul>
-        </section>
-
-        <!-- Checks and Counters -->
-        <section class="pokemon-checks">
-            <h3>Checks and Counters</h3>
-            <ul>
-                ${pokemon.checksAndCounters && typeof pokemon.checksAndCounters === 'object'
-                    ? Object.entries(pokemon.checksAndCounters)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([counter, value]) => `<li>${counter}: ${(value * 100).toFixed(2)}%</li>`)
-                          .join('')
-                    : '<li>No counters available</li>'
                 }
             </ul>
         </section>
@@ -144,15 +134,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-moves">
             <h3>Moves</h3>
             <ul>
-                ${pokemon.moves && typeof pokemon.moves === 'object'
-                    ? Object.entries(pokemon.moves)
-                          .sort(([, a], [, b]) => b - a)
-                          .map(([move, value]) => `<li>${move}: ${(value / 1000).toFixed(2)}%</li>`)
-                          .join('')
-                    : '<li>No moves available</li>'
-                }
+                ${ displayMoves(pokemon.moves)}
             </ul>
         </section>
+
     `;
 
     // Créez un camembert des Tera Types s'ils existent
@@ -163,15 +148,29 @@ function displayPokemonDetails(pokemon) {
     }
 }
 
-
 // Fonction pour trier et afficher les 10 premiers éléments d'une liste d'items, spreads, etc.
-function sortAndDisplay(data) {
+function sortAndDisplay(data, total = 100) {
     if (!data) return '<li>Aucun élément disponible</li>';
+
+    let normalizedData = [];
 
     if (Array.isArray(data)) {
         // Si les éléments sont des objets avec des valeurs numériques, triez-les par valeur
-        const sortedData = data.sort((a, b) => (b.value || 0) - (a.value || 0)); // Assurez-vous que les éléments ont une propriété 'value' pour le tri
-        return sortedData.slice(0, 10).map(item => `<li>${item.name}: ${item.value || 'Non défini'}</li>`).join('');
+        const sortedData = data.sort((a, b) => (b.value || 0) - (a.value || 0));
+
+        // Calculer la somme des valeurs
+        const totalValue = sortedData.reduce((sum, item) => sum + (item.value || 0), 0);
+
+        // Redistribuer les valeurs pour que la somme fasse 100
+        if (totalValue > 0) {
+            normalizedData = sortedData.map(item => ({
+                name: item.name,
+                value: (item.value / totalValue) * total
+            }));
+        }
+
+        // Afficher les éléments normalisés
+        return normalizedData.slice(0, 10).map(item => `<li>${item.name}: ${item.value.toFixed(2)}%</li>`).join('');
     }
 
     if (typeof data === 'object') {
@@ -179,8 +178,19 @@ function sortAndDisplay(data) {
         const sortedEntries = Object.entries(data)
             .sort((a, b) => (b[1] || 0) - (a[1] || 0))
             .slice(0, 10);
-        
-        return sortedEntries.map(([key, value]) => `<li>${key}: ${value || 'Non défini'}</li>`).join('');
+
+        // Calculer la somme des valeurs
+        const totalValue = sortedEntries.reduce((sum, entry) => sum + (entry[1] || 0), 0);
+
+        // Redistribuer les valeurs pour que la somme fasse 100
+        if (totalValue > 0) {
+            normalizedData = sortedEntries.map(([key, value]) => ({
+                name: key,
+                value: (value / totalValue) * total
+            }));
+        }
+
+        return normalizedData.map(item => `<li>${item.name}: ${item.value.toFixed(2)}%</li>`).join('');
     }
 
     return '<li>Aucun élément disponible</li>';
@@ -265,25 +275,134 @@ function createTeraTypesChart(teraTypes) {
     });
 }
 
-// Récupérer et afficher les détails du Pokémon lorsque la page est chargée
-document.addEventListener('DOMContentLoaded', () => {
+// Récupération des données à l'ouverture de la page
+document.addEventListener('DOMContentLoaded', async () => {
     const pokemonName = getQueryParam('name');
 
     if (pokemonName) {
-        fetch(`/api/pokemon/${pokemonName.toLowerCase()}`)
-            .then(response => {
-                if (response.ok) return response.json();
-                else throw new Error('Pokémon non trouvé');
-            })
-            .then(pokemon => {
-                console.log('Données reçues du serveur:', pokemon); // Log pour vérification
-                displayPokemonDetails(pokemon);
-            })
-            .catch(error => {
-                console.error(error);
-                document.getElementById('pokemon-details').innerHTML = '<p>Pokémon non trouvé</p>';
-            });
-    } else {
-        document.getElementById('pokemon-details').innerHTML = '<p>Aucun Pokémon spécifié</p>';
+        try {
+            const response = await fetch(`/api/pokemon/${pokemonName.toLowerCase()}`);
+            if (!response.ok) throw new Error('Pokémon non trouvé');
+
+            const pokemon = await response.json();
+            displayPokemonDetails(pokemon);
+
+            const teammatesHTML = await displayTeammates(pokemon.teammates);
+            document.querySelector('.pokemon-teammates ul').innerHTML = teammatesHTML;
+            
+            const movesHTML = await displayMoves(pokemon.moves);
+            document.querySelector('.pokemon-moves ul').innerHTML = movesHTML;
+        
+        } catch (error) {
+            console.error(error);
+            document.getElementById('pokemon-details').innerHTML = '<p>Erreur lors de la récupération des détails.</p>';
+        }
     }
 });
+
+function displayAbilities(abilities) {
+    if (!abilities || typeof abilities !== 'object') return '<li>No abilities available</li>';
+
+    const sortedAbilities = Object.entries(abilities)
+        .sort(([, a], [, b]) => b - a);
+
+    const totalValue = sortedAbilities.reduce((sum, [, value]) => sum + value, 0);
+
+    // Redistribuer les valeurs pour que la somme fasse 100
+    const normalizedAbilities = sortedAbilities.map(([key, value]) => ({
+        name: key,
+        value: (value / totalValue) * 100
+    }));
+
+    return normalizedAbilities.map(item => `<li>${item.name}: ${item.value.toFixed(2)}%</li>`).join('');
+}
+
+// Exemple pour les items
+function displayItems(items) {
+    if (!items || items.length === 0) return '<li>No items available</li>';
+
+    const sortedItems = sortAndDisplay(items);
+    return sortedItems;
+}
+
+// Fonction pour afficher les moves avec leurs valeurs normalisées
+async function displayMoves(moves) {
+    if (!moves || typeof moves !== 'object') return '<li>No moves available</li>';
+
+    // Trier les moves par valeur décroissante (les plus utilisés en premier)
+    const sortedMoves = Object.entries(moves)
+        .sort(([, a], [, b]) => b - a)  // Tri par valeur décroissante
+        .slice(0, 10);  // Limiter aux 10 premiers
+
+    // Calculer la somme des valeurs pour normaliser
+    const totalValue = sortedMoves.reduce((sum, [, value]) => sum + value, 0);
+
+    // Normaliser les valeurs pour que la somme fasse 100
+    const normalizedMoves = sortedMoves.map(([move, value]) => ({
+        move: move,
+        value: totalValue > 0 ? (value / totalValue) * 100 : 0  // Calcul du pourcentage
+    }));
+
+    // Afficher les 10 moves les plus utilisés avec leur pourcentage
+    return normalizedMoves.map(item => `<li>${item.move}: ${item.value.toFixed(2)}%</li>`).join('');
+}
+
+async function displayTeammates(teammates) {
+    if (!teammates || typeof teammates !== 'object') return '<li>Aucun teammate disponible</li>';
+
+    // Trier les coéquipiers par valeur décroissante
+    const sortedTeammates = Object.entries(teammates)
+        .sort(([, a], [, b]) => b - a)  // Tri par valeur décroissante
+        .slice(0, 10);  // Limite aux 10 premiers
+
+    // Calculer la somme des valeurs
+    const totalValue = sortedTeammates.reduce((sum, [, value]) => sum + value, 0);
+
+    // Normaliser les valeurs pour que la somme fasse 100
+    const normalizedTeammates = sortedTeammates.map(([name, value]) => ({
+        name: name,
+        value: totalValue > 0 ? (value / totalValue) * 100 : 0  // Pourcentage
+    }));
+
+    // Récupérer les images des coéquipiers et afficher la liste
+    const teammateList = await Promise.all(
+        normalizedTeammates.map(async ({ name, value }) => {
+            const imageUrl = await getTeammateImage(name);
+
+            // Ignorer les coéquipiers sans image valide
+            if (!imageUrl) return null;
+
+            return `
+                <li style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <img src="${imageUrl}" alt="${name}" style="width: 40px; height: 40px; margin-right: 10px; border-radius: 50%;" />
+                    <span>${name}: ${value.toFixed(2)}%</span>
+                </li>
+            `;
+        })
+    );
+
+    // Filtrer les éléments nuls (coéquipiers sans image valide) et joindre les résultats
+    return teammateList.filter(item => item !== null).join('');
+}
+
+async function getTeammateImage(name) {
+    try {
+        const response = await fetch(`/api/pokemon/${name.toLowerCase()}`);
+        if (response.ok) {
+            const teammateData = await response.json();
+            return teammateData.image
+                ? `/ressources/pokedex/${teammateData.image}`
+                : null; // Retourne null si aucune image spécifique n'est disponible
+        }
+    } catch {
+        return null; // Retourne null en cas d'erreur
+    }
+}
+
+// Exemple pour les abilities
+function displayAbilities(abilities) {
+    if (!abilities || Object.keys(abilities).length === 0) return '<li>No abilities available</li>';
+
+    const sortedAbilities = sortAndDisplay(abilities);
+    return sortedAbilities;
+}
