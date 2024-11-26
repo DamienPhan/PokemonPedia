@@ -258,6 +258,7 @@ function createTeraTypesChart(teraTypes) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false, // Désactiver l'aspect ratio pour personnaliser la taille
             plugins: {
                 legend: {
                     position: 'top',
@@ -269,6 +270,12 @@ function createTeraTypesChart(teraTypes) {
                             return `${tooltipItem.label}: ${value}%`;
                         }
                     }
+                }
+            },
+            layout: {
+                padding: {
+                    top: 20,
+                    bottom: 20,
                 }
             }
         }
