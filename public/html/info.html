@@ -12,8 +12,15 @@
         <button id="back-button" class="back-button">Retour</button>
         <!-- Conteneur pour afficher les informations du Pokémon recherché -->
         <div id="pokemon-details"></div>
+
+        <!-- Conteneur pour le graphique des Tera Types -->
+        <section class="pokemon-tera-types-chart">
+            <h3>Tera Types Chart</h3>
+            <canvas id="teraTypesChart" width="10" height="10"></canvas>
+        </section>
     </div>
     
-    <script src="../js/info.js"></script> <!-- Nouveau fichier JS spécifique à cette page -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/info.js"></script>
 </body>
 </html>

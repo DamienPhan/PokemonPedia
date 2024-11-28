@@ -125,3 +125,25 @@ app.get('/api/pokemon/suggestions/:query', async (req, res) => {
         res.status(500).send('Erreur serveur');
     }
 });
+
+app.get('/api/pokemon/:name', async (req, res) => {
+    const pokemonName = req.params.name.toLowerCase();
+
+    try {
+        const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
+
+        if (pokemon) {
+            res.json({
+                name: pokemon.PName,
+                teammates: pokemon.Teammates || {}, // Inclure les teammates
+                image: pokemon.Image || 'default.png', // Assurer un fallback pour l'image
+                // Autres données...
+            });
+        } else {
+            res.status(404).send('Pokémon non trouvé');
+        }
+    } catch (error) {
+        console.error('Erreur serveur:', error);
+        res.status(500).send('Erreur serveur');
+    }
+});
