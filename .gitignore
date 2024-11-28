@@ -7,7 +7,7 @@ __pycache__/
 data/
 lib/
 node_modules/
-ressources/
+ressources/data_output
 package-lock.json
 package.json
 pyvenv.cfg
