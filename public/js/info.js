@@ -59,12 +59,6 @@ function displayPokemonDetails(pokemon) {
                     ${pokemon.type2 ? `<strong> / </strong><span class="type-of-pokemon ${type2Class}">${pokemon.type2}</span>` : ''}
                 </li>
                 <li><strong>Usage:</strong> ${(pokemon.usage * 100).toFixed(2)}%</li>
-                <li><strong>Viability Ceiling:</strong> ${pokemon.viabilityCeiling && pokemon.viabilityCeiling.length > 0 ? pokemon.viabilityCeiling.join(', ') : 'Non défini'}</li>
-                <li><strong>Happiness:</strong> ${
-                pokemon.happiness && pokemon.happiness['255'] !== undefined
-                    ? pokemon.happiness['255'].toFixed(2)
-                    : 'Non défini'
-                }</li>
             </ul>
         </section>
 
@@ -94,7 +88,7 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-spreads">
             <h3>Spreads</h3>
             <ul>
-                ${sortAndDisplay(pokemon.spreads)}
+                ${displaySpreads(pokemon.spreads)}
             </ul>
         </section>
 
@@ -308,20 +302,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function displayAbilities(abilities) {
-    if (!abilities || typeof abilities !== 'object') return '<li>No abilities available</li>';
+    if (!abilities || typeof abilities !== 'object' || Object.keys(abilities).length === 0) {
+        return '<li>No abilities available</li>';
+    }
 
+    // Trier les abilities par valeur décroissante
     const sortedAbilities = Object.entries(abilities)
-        .sort(([, a], [, b]) => b - a);
+        .sort(([, a], [, b]) => b - a) // Tri par valeur décroissante
+        .slice(0, 10); // Limiter aux 10 premières abilities
 
+    // Calculer la somme des valeurs
     const totalValue = sortedAbilities.reduce((sum, [, value]) => sum + value, 0);
 
-    // Redistribuer les valeurs pour que la somme fasse 100
-    const normalizedAbilities = sortedAbilities.map(([key, value]) => ({
-        name: key,
-        value: (value / totalValue) * 100
+    // Normaliser les valeurs pour qu'elles représentent un pourcentage
+    const normalizedAbilities = sortedAbilities.map(([ability, value]) => ({
+        ability: ability,
+        value: totalValue > 0 ? (value / totalValue) * 100 : 0 // Calcul du pourcentage
     }));
 
-    return normalizedAbilities.map(item => `<li>${item.name}: ${item.value.toFixed(2)}%</li>`).join('');
+    // Générer la liste HTML
+    return normalizedAbilities
+        .map(item => `<li>${item.ability}: ${item.value.toFixed(2)}%</li>`)
+        .join('');
 }
 
 // Exemple pour les items
@@ -406,10 +408,39 @@ async function getTeammateImage(name) {
     }
 }
 
-// Exemple pour les abilities
-function displayAbilities(abilities) {
-    if (!abilities || Object.keys(abilities).length === 0) return '<li>No abilities available</li>';
+function displaySpreads(spreads) {
+    if (!spreads || spreads.length === 0) return '<li>Aucun spread disponible</li>';
 
-    const sortedAbilities = sortAndDisplay(abilities);
-    return sortedAbilities;
+    // Trier les spreads par valeur décroissante
+    const sortedSpreads = Object.entries(spreads)
+        .sort(([, a], [, b]) => b - a) // Tri par valeur décroissante
+        .slice(0, 10); // Limiter aux 10 premiers
+
+    // Calculer la somme des valeurs pour normaliser
+    const totalValue = sortedSpreads.reduce((sum, [, value]) => sum + value, 0);
+
+    // Normaliser les valeurs pour que la somme fasse 100
+    const normalizedSpreads = sortedSpreads.map(([spread, value]) => ({
+        spread: spread,
+        value: totalValue > 0 ? (value / totalValue) * 100 : 0 // Pourcentage
+    }));
+
+    // Générer le HTML pour chaque spread
+    return normalizedSpreads.map(({ spread, value }) => {
+        // Séparer la nature et les IVs (exemple : "Jolly" et "4/252/4/0/36/212")
+        const [nature, ivs] = spread.split(':');
+        return `
+            <li style="display: flex; align-items: center; justify-content: space-between; padding: 5px 0;">
+                <div style="flex: 1; text-align: left; font-weight: bold;">
+                    <span style="color: #87CEEB;">Nature:</span> ${nature}
+                </div>
+                <div style="flex: 2; text-align: center;">
+                    <span style="color: #87CEEB;">IVs:</span> ${ivs}
+                </div>
+                <div style="flex: 1; text-align: right; font-weight: bold;">
+                    ${value.toFixed(2)}%
+                </div>
+            </li>
+        `;
+    }).join('');
 }
