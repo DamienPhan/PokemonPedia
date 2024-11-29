@@ -53,15 +53,13 @@ const Pokemon = mongoose.model('Pokemon', pokemonSchema);
 app.get('/api/pokemon/:name', async (req, res) => {
     const pokemonName = req.params.name.toLowerCase();
 
-    console.log(`Recherche du Pokémon : ${pokemonName}`); // Log pour le nom recherché
+    // console.log(`Recherche du Pokémon : ${pokemonName}`); // Log pour le nom recherché
 
     try {
         const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
 
-        console.log("Données récupérées depuis MongoDB:", pokemon); // Log pour afficher les données récupérées
 
         if (pokemon) {
-            console.log('Données Pokémon récupérées depuis MongoDB:', pokemon); // Log pour vérifier les données
             res.json({
                 name: pokemon.PName,
                 items: pokemon.Items || {},
@@ -126,24 +124,37 @@ app.get('/api/pokemon/suggestions/:query', async (req, res) => {
     }
 });
 
-app.get('/api/pokemon/:name', async (req, res) => {
-    const pokemonName = req.params.name.toLowerCase();
+// Route pour ajouter un Pokémon à la base de données
+app.post('/api/pokemon', async (req, res) => {
+    const {
+        name, type1, type2, hp, attack, defense, spAtk, spDef, speed, image
+    } = req.body;
+
+    // Vérifier que tous les champs nécessaires sont présents
+    if (!name || !type1 || !hp || !attack || !defense || !spAtk || !spDef || !speed) {
+        return res.status(400).send('Tous les champs requis doivent être remplis.');
+    }
+
+    const newPokemon = new Pokemon({
+        PName: name,
+        "Type 1": type1,
+        "Type 2": type2 || '', // Type 2 peut être vide
+        HP: hp,
+        Attack: attack,
+        Defense: defense,
+        SpAtk: spAtk,
+        SpDef: spDef,
+        Speed: speed,
+        Image: image || '', // Si pas d'image, mettre une valeur vide
+        Total: hp + attack + defense + spAtk + spDef + speed, // Exemple simple pour le total
+    });
 
     try {
-        const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
-
-        if (pokemon) {
-            res.json({
-                name: pokemon.PName,
-                teammates: pokemon.Teammates || {}, // Inclure les teammates
-                image: pokemon.Image || 'default.png', // Assurer un fallback pour l'image
-                // Autres données...
-            });
-        } else {
-            res.status(404).send('Pokémon non trouvé');
-        }
+        // Enregistrer le Pokémon dans MongoDB
+        await newPokemon.save();
+        res.status(201).send('Pokémon ajouté avec succès!');
     } catch (error) {
-        console.error('Erreur serveur:', error);
+        console.error('Erreur lors de l\'ajout du Pokémon:', error);
         res.status(500).send('Erreur serveur');
     }
 });

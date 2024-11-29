@@ -4,7 +4,6 @@ function getQueryParam(param) {
     return urlParams.get(param);
 }
 
-
 // Ajoute un événement au bouton "Retour" pour revenir à la page précédente
 document.getElementById('back-button').addEventListener('click', () => {
     window.history.back();
@@ -86,9 +85,10 @@ function displayPokemonDetails(pokemon) {
         <section class="pokemon-items">
             <h3>Items</h3>
             <ul>
-                ${sortAndDisplay(pokemon.items)}
+                ${displayItems(pokemon.items)}
             </ul>
         </section>
+
 
         <!-- Spreads -->
         <section class="pokemon-spreads">
@@ -157,45 +157,64 @@ function displayPokemonDetails(pokemon) {
     }
 }
 
-// Fonction utilitaire pour trier et afficher les données (Items, Abilities, etc.)
+function transformItems(itemsObj) {
+    return Object.entries(itemsObj)
+        .map(([name, percentage]) => ({ name, percentage }))
+        .filter(item => item.percentage > 0); // Garder les éléments dont le pourcentage est positif
+}
+
+function displayItems(itemsObj) {
+    // Utilisation de sortAndDisplay pour gérer le calcul des pourcentages
+    const itemsArray = Object.entries(itemsObj).map(([name, percentage]) => ({ name, percentage }));
+
+    // Trier et afficher les items avec les pourcentages correctement calculés
+    const htmlOutput = sortAndDisplay(itemsArray.map(item => ({ name: item.name, value: item.percentage })));
+
+    return htmlOutput || '<li>No items available</li>';
+}
+
 function sortAndDisplay(data, total = 100) {
     if (!data) return '<li>No data available</li>';
 
-    let normalizedData = [];
+    const normalizedData = [];
 
-    if (Array.isArray(data)) {
-        // Cas des tableaux (items, spreads, etc.)
-        const sortedData = data.sort((a, b) => (b.value || 0) - (a.value || 0));
-        const totalValue = sortedData.reduce((sum, item) => sum + (item.value || 0), 0);
-        if (totalValue > 0) {
-            normalizedData = sortedData.map(item => ({
+    // Fonction générique pour obtenir l'URL de l'image avec fallback
+    const getImageUrl = (itemName) => {
+        const itemNameForImage = itemName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+        const primaryUrl = `/ressources/hold-item/${itemNameForImage}.png`;
+        const fallbackUrl = `/ressources/berry/${itemNameForImage.slice(0, -5)}.png`; // enlever les 5 dernières lettres
+        return `${primaryUrl},${fallbackUrl}`;
+    };
+
+    // Traitement des données, que ce soit un tableau ou un objet
+    const processedData = Array.isArray(data) 
+        ? data.sort((a, b) => (b.value || 0) - (a.value || 0))
+            .map(item => ({
                 name: item.name,
-                value: (item.value / totalValue) * total
-            }));
-        }
-
-        return normalizedData.slice(0, 10).map(item => `<li>${item.name}: ${item.value.toFixed(2)}%</li>`).join('');
-    }
-
-    if (typeof data === 'object') {
-        // Cas des objets (ex. abilities)
-        const sortedEntries = Object.entries(data)
+                value: (item.value || 0) / data.reduce((sum, i) => sum + (i.value || 0), 0) * total
+            }))
+        : Object.entries(data)
             .sort((a, b) => (b[1] || 0) - (a[1] || 0))
-            .slice(0, 10);
-        const totalValue = sortedEntries.reduce((sum, entry) => sum + (entry[1] || 0), 0);
-
-        if (totalValue > 0) {
-            normalizedData = sortedEntries.map(([key, value]) => ({
+            .map(([key, value]) => ({
                 name: key,
-                value: (value / totalValue) * total
+                value: (value || 0) / Object.values(data).reduce((sum, v) => sum + (v || 0), 0) * total
             }));
-        }
 
-        return normalizedData.map(item => `<li>${item.name}: ${item.value.toFixed(2)}%</li>`).join('');
-    }
-
-    return '<li>Not found</li>';
+    // Générer le HTML avec les images
+    return processedData.slice(0, 10).map(item => {
+        const imageUrls = getImageUrl(item.name);
+        return `
+            <li style="display: flex; align-items: center; margin-bottom: 8px;">
+                <img src="${imageUrls.split(',')[0]}" 
+                     alt="${item.name}"
+                     onerror="this.src='${imageUrls.split(',')[1]}'; this.onerror=null;" 
+                     style="width: 40px; height: 40px; margin-right: 10px; border-radius: 4px;" />
+                <span>${item.name}: ${item.value.toFixed(2)}%</span>
+            </li>
+        `;
+    }).join('') || '<li>Not found</li>';
 }
+
 
 // Crée une barre de statistique pour un Pokémon (HTML + styles)
 function createStatBar(label, value) {
@@ -204,15 +223,15 @@ function createStatBar(label, value) {
 
     // Détermine la couleur en fonction de la valeur
     let color;
-    if (value <= 50) {
+    if (value < 50) {
         color = "#e74c3c"; // Rouge
-    } else if (value <= 75) {
+    } else if (value < 75) {
         color = "#f39c12"; // Orange
-    } else if (value <= 100) {
+    } else if (value < 100) {
         color = "#f1c40f"; // Jaune
-    } else if (value <= 125) {
+    } else if (value < 125) {
         color = "#2ecc71"; // Vert clair
-    } else if (value <= 150) {
+    } else if (value < 150) {
         color = "#3498db"; // Bleu
     } else {
         color = "#9b59b6"; // Violet
@@ -333,14 +352,6 @@ function displayAbilities(abilities) {
         .join('');
 }
 
-// Fonction pour afficher les objets (items)
-function displayItems(items) {
-    if (!items || items.length === 0) return '<li>No items available</li>';
-
-    const sortedItems = sortAndDisplay(items);
-    return sortedItems;
-}
-
 // Fonction pour afficher les attaques
 async function displayMoves(moves) {
     if (!moves || typeof moves !== 'object') return '<li>No moves available</li>';
@@ -360,6 +371,7 @@ async function displayMoves(moves) {
 // Fonction pour afficher les coéquipiers (teammates)
 async function displayTeammates(teammates) {
     if (!teammates || typeof teammates !== 'object') return '<li>Aucun teammate disponible</li>';
+    
     const sortedTeammates = Object.entries(teammates)
         .sort(([, a], [, b]) => b - a)  
         .slice(0, 10);  
@@ -370,21 +382,27 @@ async function displayTeammates(teammates) {
         value: totalValue > 0 ? (value / totalValue) * 100 : 0  
     }));
 
-    // Génère un HTML pour chaque coéquipier avec son image
+    // Génère un HTML pour chaque coéquipier avec son image et un lien vers sa page
     const teammateList = await Promise.all(
         normalizedTeammates.map(async ({ name, value }) => {
             const imageUrl = await getTeammateImage(name);
 
             if (!imageUrl) return null;
 
+            // Crée un lien autour du nom du Pokémon
+            const pokemonLink = `/html/info.html?name=${name.toLowerCase()}`;
+
             return `
                 <li style="display: flex; align-items: center; margin-bottom: 8px;">
                     <img src="${imageUrl}" alt="${name}" style="width: 40px; height: 40px; margin-right: 10px; border-radius: 50%;" />
-                    <span>${name}: ${value.toFixed(2)}%</span>
+                    <a href="${pokemonLink}" style="text-decoration: none; color: inherit;">
+                        <span>${name}: ${value.toFixed(2)}%</span>
+                    </a>
                 </li>
             `;
         })
     );
+    
     return teammateList.filter(item => item !== null).join('');
 }
 

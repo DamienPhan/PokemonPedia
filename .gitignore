@@ -12,3 +12,5 @@ package-lock.json
 package.json
 pyvenv.cfg
 pymongo/
+ressources/hold-item/*
+ressources/hold-item faux/*

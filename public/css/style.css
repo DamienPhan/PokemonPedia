@@ -125,29 +125,17 @@ body.theme--dark {
     border-radius: 50%;
 }
 
-/* Bouton retour */
-.back-button {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background-color: var(--theme-sidebar-color);
-    color: #ffffff;
+.btn-add {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    padding: 10px 20px; /* Add padding */
     border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 16px;
+    border-radius: 5px; /* Rounded corners */
     cursor: pointer;
-    box-shadow: 0 4px 6px var(--theme-shadow-color);
-    transition: background-color 0.3s, transform 0.2s;
-    z-index: 1000;
+    font-size: 16px;
+    margin-top: 20px; /* Add some space at the top */
 }
 
-.back-button:hover {
-    background-color: var(--theme-link-color);
-    transform: translateY(-2px);
-}
-
-.back-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px var(--theme-shadow-color);
+.btn-add:hover {
+    background-color: #45a049; /* Darker green on hover */
 }
