@@ -8,6 +8,9 @@ from datetime import datetime
 from pyspark.ml.clustering import KMeans
 from pyspark.ml.evaluation import ClusteringEvaluator
 import math
+import os
+import sys
+import json
 
 # Fonction pour sauvegarder l'équipe dans MongoDB
 def save_team_to_db(team, mongo_uri, database, collection):
@@ -77,11 +80,22 @@ def get_teammate_synergy(team):
 
 ### SPARK Machine Learning Clustering avec evaluator Silhouette pour KMeans
 
+# Suppress Spark logging
+os.environ["PYSPARK_SUBMIT_ARGS"] = "--conf spark.driver.extraJavaOptions=-Dlog4j.configuration=file:log4j.properties pyspark-shell"
+
+# Optional: Suppress JVM output in the console
+sys.stderr = open(os.devnull, "w")
+
+
 spark = SparkSession.builder \
     .appName("teamComposer") \
+    .config("spark.executor.memory", "4g") \
+    .config("spark.driver.memory", "4g") \
     .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
     .getOrCreate()
-
+    
+# Reset standard error to display critical logs if necessary
+sys.stderr = sys.__stderr__
 spark.conf.set("spark.sql.debug.maxToStringFields", "100")
 spark.sparkContext.setLogLevel("ERROR")
 
@@ -125,7 +139,7 @@ normalized_df = scaler_model.transform(assembled_df)
 
 
 # Trouve le nombre optimal de clusters en utilisant le Silhouette Score voir https://spark.apache.org/docs/latest/ml-clustering.html premier exemple
-def optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max_k=10, seed=42):
+def optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=2, max_k=5, seed=1):
     best_k = min_k
     best_silhouette = -1
     evaluator = ClusteringEvaluator(
@@ -151,7 +165,7 @@ def optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max
     print(f"Meilleur nombre de clusters : {best_k}, avec un Silhouette Score de {best_silhouette}")
     return best_k, best_silhouette
 
-best_k, best_silhouette = optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max_k=10, seed=42)
+best_k, best_silhouette = optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=2, max_k=5, seed=1)
 
 
 # K-Means : 
@@ -177,7 +191,7 @@ clustered_df = clustered_df.select(
 
 
 # Permet de prédire le suggerer le prochain pokemon en fonction de criteres donnes 
-def predict_next_pokemon(clustered_df, current_team, max_suggestions=7):
+def suggest_next_pokemon(clustered_df, current_team, max_suggestions=7):
     # toPandas pcq plus flexible
     pokemon_list = clustered_df.toPandas()
     suggestions = []
@@ -219,38 +233,43 @@ def predict_next_pokemon(clustered_df, current_team, max_suggestions=7):
     return suggestions[:max_suggestions]
 
 
-
-
-# # Exemple d'utilisation
-# starter_pokemons = ["Charizard"]  # Deux Pokémon de départ
-# pokemon_list = clustered_df.toPandas()
-# starters = pokemon_list[pokemon_list["PName"].isin(starter_pokemons)]
-
-# if len(starters) < len(starter_pokemons):
-#     missing_pokemons = [p for p in starter_pokemons if p not in starters["PName"].values]
-#     raise ValueError(f"Les Pokémon suivants n'existent pas dans la base de données : {', '.join(missing_pokemons)}")
-
-# team = starters.to_dict(orient="records")  # Ajouter les Pokémon de départ
-
-# print(f"Équipe actuelle : {[p['PName'] for p in team]}")
-
-# while len(team) < 6:
-#     suggestions = predict_next_pokemon(clustered_df, team)
-#     print("\nSuggestions pour le prochain Pokémon :")
-#     for i, suggestion in enumerate(suggestions):
-#         print(f"{i + 1}. Nom : {suggestion['PName']}, "
-#               f"Type Synergy : {suggestion['Type Synergy']}, "
-#               f"Teammate Synergy : {suggestion['Teammate Synergy']}, "
-#               f"Combined Score : {suggestion['Combined Score']:.2f}")
-
-#     # Choix simulé (prend automatiquement la première suggestion ici, mais pourrait être interactif)
-#     chosen_pokemon = suggestions[0]
-#     team.append(next(p for p in pokemon_list.to_dict(orient="records") if p["PName"] == chosen_pokemon["PName"]))
-#     print(f"\nPokémon ajouté : {chosen_pokemon['PName']}")
-#     print(f"Équipe actuelle : {[p['PName'] for p in team]}")
-
-# # Sauvegarder l'équipe dans MongoDB
-# save_team_to_db(team, mongo_uri, "PokemonDB", "Teams")
-
-# Fermeture de la session Spark
 spark.stop()
+
+
+# Helper to output errors in JSON format
+def output_error(message):
+    print(json.dumps({"error": message}), file=sys.stderr)
+    sys.exit(1)
+
+# Ensure input file argument is provided
+if len(sys.argv) < 2:
+    output_error("No file path provided")
+
+file_path = sys.argv[1]
+
+# Try reading the team data from the input file
+try:
+    with open(file_path, 'r') as file:
+        team_data = json.load(file)
+except Exception as e:
+    output_error(f"Error reading input file: {str(e)}")
+
+# Generate suggestions
+try:
+    suggestions = suggest_next_pokemon(clustered_df, team_data, max_suggestions=7)
+except Exception as e:
+    output_error(f"Error generating suggestions: {str(e)}")
+
+# Define output file path
+output_dir = os.path.join(os.path.dirname(__file__), "..", "..", "ressources", "data_output", "temp")
+os.makedirs(output_dir, exist_ok=True)  # Ensure directory exists
+output_file = os.path.join(output_dir, "team_suggested.json")
+
+# Save suggestions to the file
+try:
+    with open(output_file, 'w') as file:
+        json.dump(suggestions, file, indent=4)
+    print(json.dumps({"status": "success", "file": output_file}))  # Success message
+except Exception as e:
+    output_error(f"Error writing output file: {str(e)}")
+    

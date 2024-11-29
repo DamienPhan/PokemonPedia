@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
+//Python
+const fs = require('fs');
+const { spawn } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +52,15 @@ const pokemonSchema = new mongoose.Schema({
 }, { collection: 'PokemonData' });
 
 const Pokemon = mongoose.model('Pokemon', pokemonSchema);
+
+// Team Schema
+const teamSchema = new mongoose.Schema({
+    teamName: String,
+    members: [String], // Pokémon names
+    timestamp: { type: Date, default: Date.now }
+}, { collection: 'Teams' });
+
+const Team = mongoose.model('Team', teamSchema);
 
 app.get('/api/pokemon/:name', async (req, res) => {
     const pokemonName = req.params.name.toLowerCase();
@@ -98,11 +110,6 @@ app.get('/api/pokemon/:name', async (req, res) => {
     }
 });
 
-// Démarrer le serveur
-app.listen(PORT, () => {
-    console.log(`Serveur en écoute sur le port ${PORT}`);
-});
-
 app.get('/api/pokemon/suggestions/:query', async (req, res) => {
     const query = req.params.query.toLowerCase();
 
@@ -146,4 +153,91 @@ app.get('/api/pokemon/:name', async (req, res) => {
         console.error('Erreur serveur:', error);
         res.status(500).send('Erreur serveur');
     }
+});
+
+
+// Endpoint to save a team
+app.post('/api/teams', async (req, res) => {
+    const { teamName, members } = req.body;
+
+    console.log(`Sauvegarde de l'équipe : ${teamName} avec membres:`, members);
+
+    if (!teamName || !members || members.length === 0) {
+        return res.status(400).send('Nom de l\'équipe et membres requis.');
+    }
+
+    try {
+        const newTeam = new Team({ teamName, members });
+        await newTeam.save();
+        res.status(201).send('Équipe sauvegardée avec succès.');
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde de l\'équipe:', error);
+        res.status(500).send('Erreur serveur.');
+    }
+});
+
+
+// Endpoint to retrieve all teams
+app.get('/api/teams', async (req, res) => {
+    try {
+        const teams = await Team.find({}, { teamName: 1, members: 1, timestamp: 1, _id: 0 });
+        res.json(teams);
+    } catch (error) {
+        console.error('Error fetching teams:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+
+
+// Route for team suggestions
+app.get('/api/team-suggestions/:team', async (req, res) => {
+    const teamNames = req.params.team.split(',');
+
+    try {
+        // Fetch data for the given team from MongoDB
+        const teamData = await Pokemon.find({ PName: { $in: teamNames } }).lean();
+
+        if (!teamData || teamData.length === 0) {
+            return res.status(404).json({ error: 'No Pokémon found for the given team' });
+        }
+
+        // Save team data to a temporary file
+        const tempInputFile = path.join(__dirname, 'temp_team_data.json');
+        fs.writeFileSync(tempInputFile, JSON.stringify(teamData));
+
+        // Execute Python script
+        const pythonScriptPath = path.join(__dirname, 'public', 'py', 'machineLearning', 'teamComposer.py');
+        const pythonProcess = spawn('python3', [pythonScriptPath, tempInputFile]);
+
+        let errorOutput = '';
+        pythonProcess.stderr.on('data', (data) => {
+            errorOutput += data.toString();
+        });
+
+        pythonProcess.on('close', (code) => {
+            // Delete temporary input file
+            if (fs.existsSync(tempInputFile)) fs.unlinkSync(tempInputFile);
+
+            const outputFilePath = path.join(__dirname, 'ressources', 'data_output', 'temp', 'team_suggested.json');
+
+            if (code === 0 && fs.existsSync(outputFilePath)) {
+                // Send the suggestions as a response
+                const suggestions = JSON.parse(fs.readFileSync(outputFilePath, 'utf-8'));
+                res.json(suggestions);
+            } else {
+                console.error('Python script error:', errorOutput);
+                res.status(500).json({ error: `Python script error: ${errorOutput}` });
+            }
+        });
+    } catch (error) {
+        console.error('Error processing suggestions:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+
+// Démarrer le serveur
+app.listen(PORT, () => {
+    console.log(`Serveur en écoute sur le port ${PORT}`);
 });
