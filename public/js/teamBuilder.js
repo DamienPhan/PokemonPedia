@@ -1,196 +1,134 @@
-const team = [];
+// Sélection des éléments DOM
+const searchInput = document.getElementById('pokemon-search');
+const searchResults = document.getElementById('search-results');
+const suggestionList = document.getElementById('suggestion-list');
+const teamList = document.getElementById('team-list');
+const saveTeamButton = document.getElementById('save-team-button');
+const backButton = document.getElementById('back-button');
 
-// Update the current team display
+// Équipe actuelle
+const currentTeam = [];
+
+// Événement pour revenir à la page précédente
+backButton.addEventListener('click', () => {
+    window.history.back();
+});
+
+// Fonction pour mettre à jour la liste de l'équipe
 function updateTeamList() {
-    const teamList = document.getElementById("team-list");
-    teamList.innerHTML = ""; // Reset the list
+    teamList.innerHTML = currentTeam.map((pokemon, index) => `
+        <li>
+            <img src="/images/${pokemon.image || 'default.png'}" alt="${pokemon.name}" style="width: 50px; height: 50px;" />
+            ${pokemon.name}
+            <button onclick="removeFromTeam(${index})" class="remove-button">Retirer</button>
+        </li>
+    `).join('');
 
-    team.forEach(pokemon => {
-        const li = document.createElement("li");
-        li.textContent = pokemon.name;
-
-        const img = document.createElement("img");
-        img.src = pokemon.image || "/images/default.png"; // Fallback to default image
-        img.alt = pokemon.name;
-        img.classList.add("pokemon-image");
-
-        const removeButton = document.createElement("button");
-        removeButton.textContent = "Retirer";
-        removeButton.classList.add("remove-button");
-        removeButton.onclick = () => removeFromTeam(pokemon.name);
-
-        li.appendChild(img);
-        li.appendChild(removeButton);
-        teamList.appendChild(li);
-    });
-
-    document.getElementById("save-team-button").disabled = team.length < 6;
+    // Activer/désactiver le bouton de sauvegarde
+    saveTeamButton.disabled = currentTeam.length === 0;
 }
 
-// Update displayed suggestions
-function updateSuggestions(suggestions) {
-    const suggestionList = document.getElementById("suggestion-list");
-    suggestionList.innerHTML = ""; // Clear previous suggestions
-
-    suggestions.forEach(suggestion => {
-        const li = document.createElement("li");
-
-        const img = document.createElement("img");
-        img.src = suggestion.image || "/images/default.png"; // Fallback to default image
-        img.alt = suggestion.PName;
-        img.classList.add("pokemon-image");
-
-        li.textContent = `${suggestion.PName} (Score: ${suggestion["Combined Score"].toFixed(2)})`;
-
-        const addButton = document.createElement("button");
-        addButton.textContent = "Ajouter";
-        addButton.classList.add("add-button");
-        addButton.onclick = () => addToTeam({
-            name: suggestion.PName,
-            image: suggestion.image || "/images/default.png",
-            stats: suggestion.Stats,
-            type1: suggestion["Type 1"],
-            type2: suggestion["Type 2"]
-        });
-
-        li.appendChild(img);
-        li.appendChild(addButton);
-        suggestionList.appendChild(li);
-    });
-}
-
-// Add a Pokémon to the team
-function addToTeam(pokemon) {
-    if (team.length >= 6) {
-        alert("Votre équipe est déjà complète avec 6 Pokémon.");
-        return;
-    }
-    if (team.some(p => p.name === pokemon.name)) {
-        alert(`${pokemon.name} est déjà dans l'équipe.`);
-        return;
-    }
-
-    team.push(pokemon);
+// Fonction pour retirer un Pokémon de l'équipe
+function removeFromTeam(index) {
+    currentTeam.splice(index, 1);
     updateTeamList();
-    fetchTeamSuggestions(); // Fetch updated suggestions based on the current team
 }
 
-// Remove a Pokémon from the team
-function removeFromTeam(name) {
-    const index = team.findIndex(p => p.name === name);
-    if (index > -1) {
-        team.splice(index, 1);
-        updateTeamList();
-        fetchTeamSuggestions(); // Fetch updated suggestions after removal
-    }
-}
-
-// Fetch team-based suggestions from the Python backend
-async function fetchTeamSuggestions() {
-    if (team.length === 0) {
-        updateSuggestions([]); // Clear suggestions if the team is empty
+// Fonction pour ajouter un Pokémon à l'équipe
+function addToTeam(pokemon) {
+    if (currentTeam.length >= 6) {
+        alert('Votre équipe est déjà complète (6 Pokémon maximum)!');
         return;
     }
-
-    const teamNames = team.map(p => p.name).join(",");
-    try {
-        const response = await fetch(`/api/team-suggestions/${teamNames}`);
-        if (!response.ok) {
-            throw new Error("Erreur lors de la récupération des suggestions.");
-        }
-
-        const suggestions = await response.json();
-        updateSuggestions(suggestions);
-    } catch (error) {
-        console.error("Erreur lors de la récupération des suggestions:", error);
-        alert("Impossible de récupérer les suggestions. Réessayez plus tard.");
-    }
-}
-
-// Search Pokémon dynamically
-document.getElementById("pokemon-search").addEventListener("input", async (e) => {
-    const query = e.target.value.trim(); // Get user input and trim whitespace
-    const searchResults = document.getElementById("search-results"); // Get the search results container
-
-    // Clear results if the query is empty
-    if (query.length === 0) {
-        searchResults.innerHTML = "";
+    if (currentTeam.some(p => p.name === pokemon.name)) {
+        alert(`${pokemon.name} est déjà dans l'équipe !`);
         return;
     }
+    currentTeam.push(pokemon);
+    updateTeamList();
+    loadSuggestions();
+}
 
-    try {
-        // Fetch Pokémon suggestions from the API
-        const response = await fetch(`/api/pokemon/suggestions/${query}`);
-        if (!response.ok) {
-            throw new Error("Erreur lors de la recherche."); // Throw an error if the response is not OK
-        }
-
-        const results = await response.json(); // Parse the JSON response
-        searchResults.innerHTML = ""; // Reset search results
-
-        // Iterate through the results and dynamically create list items
-        results.forEach(pokemon => {
-            const li = document.createElement("li");
-            li.classList.add("search-result-item");
-
-            const img = document.createElement("img");
-            img.src = pokemon.image || "/images/default.png"; // Fallback to a default image
-            img.alt = pokemon.name;
-            img.classList.add("pokemon-image");
-
-            const nameSpan = document.createElement("span");
-            nameSpan.textContent = pokemon.name;
-
-            const addButton = document.createElement("button");
-            addButton.textContent = "Ajouter";
-            addButton.classList.add("add-button");
-            addButton.onclick = () => addToTeam({
-                name: pokemon.name,
-                image: pokemon.image || "/images/default.png"
-            });
-
-            li.appendChild(img);
-            li.appendChild(nameSpan);
-            li.appendChild(addButton);
-            searchResults.appendChild(li);
-        });
-    } catch (error) {
-        console.error("Erreur lors de la recherche:", error);
-        alert("Impossible de rechercher des Pokémon. Veuillez réessayer plus tard.");
-    }
-});
-// Save the team
-document.getElementById("save-team-button").addEventListener("click", async () => {
-    const teamName = prompt("Entrez un nom pour votre équipe :");
+// Sauvegarder l'équipe
+saveTeamButton.addEventListener('click', () => {
+    const teamName = prompt('Entrez le nom de votre équipe :', 'TEAM');
     if (!teamName) {
-        alert("Le nom de l'équipe est requis pour la sauvegarde.");
+        alert('Le nom de l\'équipe est requis pour la sauvegarde.');
         return;
     }
 
-    const teamData = team.map(pokemon => pokemon.name);
-
-    try {
-        const response = await fetch("/api/teams", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ teamName, members: teamData }),
-        });
-
-        if (response.ok) {
-            alert("Équipe sauvegardée avec succès !");
+    fetch('/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamName, members: currentTeam.map(pokemon => pokemon.name) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            console.log('Réponse serveur :', data);
+            alert('Équipe sauvegardée avec succès !');
         } else {
-            const errorText = await response.text();
-            console.error("Erreur serveur:", errorText);
-            alert("Erreur lors de la sauvegarde de l'équipe. Veuillez réessayer.");
+            alert('Erreur lors de la sauvegarde de l\'équipe.');
         }
-    } catch (error) {
-        console.error("Erreur lors de la sauvegarde de l'équipe:", error);
-        alert("Impossible de sauvegarder l'équipe. Veuillez réessayer plus tard.");
-    }
+    })
+    .catch(error => {
+        console.error('Erreur lors de la sauvegarde de l\'équipe :', error);
+        alert('Erreur serveur lors de la sauvegarde.');
+    });
 });
 
-// Initialize the page on load
-document.addEventListener("DOMContentLoaded", () => {
-    updateTeamList(); // Initialize the team list display
-    fetchTeamSuggestions(); // Fetch and display suggestions for the current team
+
+// Fonction de recherche de Pokémon
+searchInput.addEventListener('input', () => {
+    const query = searchInput.value.trim().toLowerCase();
+
+    // Réinitialiser les résultats si la recherche est vide
+    if (!query) {
+        searchResults.innerHTML = '';
+        return;
+    }
+
+    // Appeler l'API pour rechercher des Pokémon
+    fetch(`/api/pokemon/search/suggestion/${query}`)
+        .then(response => response.json())
+        .then(results => {
+            // Afficher les résultats
+            searchResults.innerHTML = results.map(pokemon => `
+                <li onclick="addToTeam({ name: '${pokemon.name}', image: '${pokemon.image || 'default.png'}' })">
+                    <img src="/images/${pokemon.image || 'default.png'}" alt="${pokemon.name}" style="width: 50px; height: 50px;" />
+                    ${pokemon.name}
+                </li>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Erreur lors de la recherche :', error);
+            searchResults.innerHTML = '<li>Aucun Pokémon trouvé</li>';
+        });
 });
+
+// Charger les suggestions initiales
+function loadSuggestions() {
+    fetch('/api/pokemon/teambuild/suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentTeam: currentTeam.map(p => p.name) })
+    })
+    .then(response => response.json())
+    .then(suggestions => {
+        // Afficher les suggestions avec un style vertical
+        suggestionList.innerHTML = suggestions.map(pokemon => `
+            <li class="suggestion-item" onclick="addToTeam({ name: '${pokemon.name}', image: '${pokemon.image}' })">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <img src="/images/${pokemon.image}" alt="${pokemon.name}" style="width: 50px; height: 50px; margin-right: 10px;" />
+                    <div>
+                        <strong>${pokemon.name}</strong><br>
+                        <span>Synergie : ${pokemon.synergyScore}</span>
+                    </div>
+                </div>
+            </li>
+        `).join('');
+    })
+    .catch(error => {
+        console.error('Erreur lors du chargement des suggestions basées sur la synergie :', error);
+    });
+}

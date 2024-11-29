@@ -30,7 +30,7 @@ def save_team_to_db(team, mongo_uri, database, collection):
         })
 
     teams_collection.insert_one({"team": team_data, "timestamp": datetime.now()})
-    print("Équipe sauvegardée dans la collection MongoDB./n")
+    print("Équipe sauvegardée dans la collection MongoDB.")
     print("---------------------------------------------------")
 
 
