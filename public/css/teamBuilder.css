@@ -67,3 +67,24 @@ button:disabled {
     background: #555;
     cursor: not-allowed;
 }
+
+
+.suggestion-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.suggestion-item {
+    display: block;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+    background-color: #f0f0f0;
+}

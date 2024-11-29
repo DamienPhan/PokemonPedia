@@ -9,7 +9,7 @@ function searchPokemon() {
     }
 
     // Appeler l'API pour obtenir les suggestions de Pokémon
-    fetch(`/api/pokemon/suggestions/${query}`)
+    fetch(`/api/pokemon/search/suggestion/${query}`)
         .then(response => {
             if (response.ok) {
                 return response.json();

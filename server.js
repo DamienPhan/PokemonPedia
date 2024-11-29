@@ -13,6 +13,13 @@ app.use(express.json());
 // Configurer les dossiers statiques pour `public` et `ressources`
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/ressources', express.static(path.join(__dirname, 'ressources')));
+app.use('/images', express.static(path.join(__dirname, 'ressources/pokedex')));
+
+
+// Démarrer le serveur
+app.listen(PORT, () => {
+    console.log(`Serveur en écoute sur le port ${PORT}`);
+});
 
 // Connexion à MongoDB
 const mongoURI = 'mongodb://localhost:27017/PokemonDB';
@@ -50,6 +57,16 @@ const pokemonSchema = new mongoose.Schema({
 
 const Pokemon = mongoose.model('Pokemon', pokemonSchema);
 
+// TEAMS
+const teamSchema = new mongoose.Schema({
+    teamName: String,
+    members: [String],
+    timestamp: { type: Date, default: Date.now }
+}, { collection: 'Teams', versionKey: false }); // Désactive le champ __v
+
+
+const Team = mongoose.model('Team', teamSchema);
+
 app.get('/api/pokemon/:name', async (req, res) => {
     const pokemonName = req.params.name.toLowerCase();
 
@@ -58,8 +75,10 @@ app.get('/api/pokemon/:name', async (req, res) => {
     try {
         const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
 
+        //console.log("Données récupérées depuis MongoDB:", pokemon); // Log pour afficher les données récupérées
 
         if (pokemon) {
+            //console.log('Données Pokémon récupérées depuis MongoDB:', pokemon); // Log pour vérifier les données
             res.json({
                 name: pokemon.PName,
                 items: pokemon.Items || {},
@@ -96,12 +115,7 @@ app.get('/api/pokemon/:name', async (req, res) => {
     }
 });
 
-// Démarrer le serveur
-app.listen(PORT, () => {
-    console.log(`Serveur en écoute sur le port ${PORT}`);
-});
-
-app.get('/api/pokemon/suggestions/:query', async (req, res) => {
+app.get('/api/pokemon/search/suggestion/:query', async (req, res) => {
     const query = req.params.query.toLowerCase();
 
     try {
@@ -156,5 +170,33 @@ app.post('/api/pokemon', async (req, res) => {
     } catch (error) {
         console.error('Erreur lors de l\'ajout du Pokémon:', error);
         res.status(500).send('Erreur serveur');
+    }
+});
+
+
+// Route pour sauvegarder une équipe Pokémon
+app.post('/api/teams', async (req, res) => {
+    const { teamName, members } = req.body;
+
+    // Validation des données d'entrée
+    if (!teamName || !members || !Array.isArray(members) || members.length === 0) {
+        return res.status(400).json({ message: 'Le nom de l\'équipe et les membres sont requis.' });
+    }
+
+    try {
+        // Créer une nouvelle équipe avec les données reçues
+        const newTeam = new Team({
+            teamName,
+            members,
+            timestamp: Date.now()
+        });
+
+        // Sauvegarder l'équipe dans la base de données
+        const savedTeam = await newTeam.save();
+
+        res.status(201).json({ message: 'Équipe sauvegardée avec succès.', team: savedTeam });
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde de l\'équipe :', error);
+        res.status(500).json({ message: 'Erreur lors de la sauvegarde de l\'équipe.' });
     }
 });
