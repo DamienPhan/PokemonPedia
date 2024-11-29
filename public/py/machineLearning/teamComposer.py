@@ -30,7 +30,8 @@ def save_team_to_db(team, mongo_uri, database, collection):
         })
 
     teams_collection.insert_one({"team": team_data, "timestamp": datetime.now()})
-    print("Équipe sauvegardée dans la collection MongoDB.")
+    print("Équipe sauvegardée dans la collection MongoDB./n")
+    print("---------------------------------------------------")
 
 
 
@@ -125,7 +126,7 @@ normalized_df = scaler_model.transform(assembled_df)
 
 
 # Trouve le nombre optimal de clusters en utilisant le Silhouette Score voir https://spark.apache.org/docs/latest/ml-clustering.html premier exemple
-def optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max_k=10, seed=42):
+def optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max_k=10, seed=1):
     best_k = min_k
     best_silhouette = -1
     evaluator = ClusteringEvaluator(
@@ -151,7 +152,7 @@ def optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max
     print(f"Meilleur nombre de clusters : {best_k}, avec un Silhouette Score de {best_silhouette}")
     return best_k, best_silhouette
 
-best_k, best_silhouette = optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max_k=10, seed=42)
+best_k, best_silhouette = optimal_kclusters(normalized_df, feature_col="scaled_features", min_k=5, max_k=10, seed=1)
 
 
 # K-Means : 
@@ -221,36 +222,32 @@ def predict_next_pokemon(clustered_df, current_team, max_suggestions=7):
 
 
 
-# # Exemple d'utilisation
-# starter_pokemons = ["Charizard"]  # Deux Pokémon de départ
-# pokemon_list = clustered_df.toPandas()
-# starters = pokemon_list[pokemon_list["PName"].isin(starter_pokemons)]
+# Exemple d'utilisation
+starter_pokemons = ["Miraidon"]  
 
-# if len(starters) < len(starter_pokemons):
-#     missing_pokemons = [p for p in starter_pokemons if p not in starters["PName"].values]
-#     raise ValueError(f"Les Pokémon suivants n'existent pas dans la base de données : {', '.join(missing_pokemons)}")
+pokemon_list = clustered_df.toPandas()
+starters = pokemon_list[pokemon_list["PName"].isin(starter_pokemons)]
 
-# team = starters.to_dict(orient="records")  # Ajouter les Pokémon de départ
+if len(starters) < len(starter_pokemons):
+    missing_pokemons = [p for p in starter_pokemons if p not in starters["PName"].values]
+    raise ValueError(f"Les Pokémon suivants n'existent pas dans la base de données : {', '.join(missing_pokemons)}")
 
-# print(f"Équipe actuelle : {[p['PName'] for p in team]}")
+team = starters.to_dict(orient="records") 
+print(f"Équipe actuelle : {[p['PName'] for p in team]}")
 
-# while len(team) < 6:
-#     suggestions = predict_next_pokemon(clustered_df, team)
-#     print("\nSuggestions pour le prochain Pokémon :")
-#     for i, suggestion in enumerate(suggestions):
-#         print(f"{i + 1}. Nom : {suggestion['PName']}, "
-#               f"Type Synergy : {suggestion['Type Synergy']}, "
-#               f"Teammate Synergy : {suggestion['Teammate Synergy']}, "
-#               f"Combined Score : {suggestion['Combined Score']:.2f}")
+while len(team) < 6:
+    suggestions = predict_next_pokemon(clustered_df, team)
+    print("\nSuggestions pour le prochain Pokémon :")
+    for i, suggestion in enumerate(suggestions):
+        print(f"{i + 1}. Nom : {suggestion['PName']}, "
+              f"Type Synergy : {suggestion['Type Synergy']}, "
+              f"Teammate Synergy : {suggestion['Teammate Synergy']}, "
+              f"Combined Score : {suggestion['Combined Score']:.2f}")
+    chosen_pokemon = suggestions[0]
+    team.append(next(p for p in pokemon_list.to_dict(orient="records") if p["PName"] == chosen_pokemon["PName"]))
+    print(f"\nPokémon ajouté : {chosen_pokemon['PName']}")
+    print(f"Équipe actuelle : {[p['PName'] for p in team]}")
+save_team_to_db(team, mongo_uri, "PokemonDB", "Teams")
 
-#     # Choix simulé (prend automatiquement la première suggestion ici, mais pourrait être interactif)
-#     chosen_pokemon = suggestions[0]
-#     team.append(next(p for p in pokemon_list.to_dict(orient="records") if p["PName"] == chosen_pokemon["PName"]))
-#     print(f"\nPokémon ajouté : {chosen_pokemon['PName']}")
-#     print(f"Équipe actuelle : {[p['PName'] for p in team]}")
 
-# # Sauvegarder l'équipe dans MongoDB
-# save_team_to_db(team, mongo_uri, "PokemonDB", "Teams")
-
-# Fermeture de la session Spark
 spark.stop()
