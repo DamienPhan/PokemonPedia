@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Builder Pokémon</title>
+    <link rel="stylesheet" href="../css/teamBuilder.css">
+</head>
+<body class="theme--dark">
+    <div class="container">
+        <h1>Team Builder Pokémon</h1>
+
+        <!-- Section de l'équipe actuelle -->
+        <section class="current-team">
+            <h2>Équipe actuelle</h2>
+            <ul id="team-list" class="team-list"></ul>
+            <button id="save-team-button" class="save-button" disabled>Sauvegarder l'équipe</button>
+        </section>
+
+        <!-- Section des suggestions -->
+        <section class="pokemon-suggestions">
+            <h2>Suggestions</h2>
+            <ul id="suggestion-list" class="suggestion-list"></ul>
+        </section>
+
+        <!-- Section pour rechercher un Pokémon -->
+        <section class="search-pokemon">
+            <h2>Rechercher un Pokémon</h2>
+            <input type="text" id="pokemon-search" placeholder="Entrez un nom de Pokémon..." />
+            <ul id="search-results" class="search-results"></ul>
+        </section>
+
+        <button id="back-button" class="back-button">Retour</button>
+    </div>
+    
+    <script src="../js/teamBuilder.js"></script>
+</body>
+</html>
