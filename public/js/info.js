@@ -1,20 +1,26 @@
+// Fonction pour récupérer un paramètre de l'URL
 function getQueryParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 }
 
+
+// Ajoute un événement au bouton "Retour" pour revenir à la page précédente
 document.getElementById('back-button').addEventListener('click', () => {
     window.history.back();
 });
 
-
+// Fonction principale pour afficher les détails d'un Pokémon
 function displayPokemonDetails(pokemon) {
     const detailsDiv = document.getElementById('pokemon-details');
+    
+    // Si le Pokémon n'existe pas, afficher un message d'erreur
     if (!pokemon) {
         detailsDiv.innerHTML = '<p>Pokémon non trouvé</p>';
         return;
     }
 
+    // Détermine la classe CSS à utiliser en fonction du type de Pokémon
     function getTypeClass(type) {
         const typeClasses = {
             'fire': 'type-fire',
@@ -43,6 +49,7 @@ function displayPokemonDetails(pokemon) {
     const type1Class = getTypeClass(pokemon.type1);
     const type2Class = pokemon.type2 ? getTypeClass(pokemon.type2) : '';
 
+    // Génère le HTML pour afficher les informations du Pokémon
     detailsDiv.innerHTML = `
         <h2>${pokemon.name}</h2>
         <div class="pokemon-image">
@@ -142,6 +149,7 @@ function displayPokemonDetails(pokemon) {
 
     `;
 
+    // Vérifie s'il existe des types Tera pour créer un graphique
     if (pokemon.teraTypes && Object.keys(pokemon.teraTypes).length > 0) {
         createTeraTypesChart(pokemon.teraTypes);
     } else {
@@ -149,12 +157,14 @@ function displayPokemonDetails(pokemon) {
     }
 }
 
+// Fonction utilitaire pour trier et afficher les données (Items, Abilities, etc.)
 function sortAndDisplay(data, total = 100) {
-    if (!data) return '<li>Aucun élément disponible</li>';
+    if (!data) return '<li>No data available</li>';
 
     let normalizedData = [];
 
     if (Array.isArray(data)) {
+        // Cas des tableaux (items, spreads, etc.)
         const sortedData = data.sort((a, b) => (b.value || 0) - (a.value || 0));
         const totalValue = sortedData.reduce((sum, item) => sum + (item.value || 0), 0);
         if (totalValue > 0) {
@@ -168,6 +178,7 @@ function sortAndDisplay(data, total = 100) {
     }
 
     if (typeof data === 'object') {
+        // Cas des objets (ex. abilities)
         const sortedEntries = Object.entries(data)
             .sort((a, b) => (b[1] || 0) - (a[1] || 0))
             .slice(0, 10);
@@ -183,13 +194,15 @@ function sortAndDisplay(data, total = 100) {
         return normalizedData.map(item => `<li>${item.name}: ${item.value.toFixed(2)}%</li>`).join('');
     }
 
-    return '<li>Aucun élément disponible</li>';
+    return '<li>Not found</li>';
 }
 
+// Crée une barre de statistique pour un Pokémon (HTML + styles)
 function createStatBar(label, value) {
     const maxStat = 255;
     const width = (value / maxStat) * 100;
 
+    // Détermine la couleur en fonction de la valeur
     let color;
     if (value <= 50) {
         color = "#e74c3c"; // Rouge
@@ -205,6 +218,7 @@ function createStatBar(label, value) {
         color = "#9b59b6"; // Violet
     }
 
+    // Crée l'élément HTML de la barre de statistique
     return `
         <li style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 8px;">
             <strong style="width: 160px; text-align: right; margin-right: 10px;">${label}:</strong>
@@ -217,7 +231,7 @@ function createStatBar(label, value) {
     `;
 }
 
-
+// Fonction pour créer un graphique en secteurs (Tera Types)
 function createTeraTypesChart(teraTypes) {
     const ctx = document.getElementById('teraTypesChart').getContext('2d');
     const labels = Object.keys(teraTypes);
@@ -225,6 +239,7 @@ function createTeraTypesChart(teraTypes) {
     const total = rawData.reduce((sum, value) => sum + value, 0);
     const data = rawData.map(value => (value / total) * 100); 
 
+    // Fonction pour récupérer la couleur CSS associée à un type
     function getColorFromCSS(typeClass) {
         const tempElement = document.createElement('div');
         tempElement.className = `type-${typeClass.toLowerCase()}`;
@@ -236,6 +251,7 @@ function createTeraTypesChart(teraTypes) {
 
     const colors = labels.map(label => getColorFromCSS(label));
 
+    // Crée le graphique à l'aide de Chart.js
     new Chart(ctx, {
         type: 'pie',
         data: {
@@ -271,30 +287,35 @@ function createTeraTypesChart(teraTypes) {
     });
 }
 
+// Fonction principale exécutée lorsque le DOM est chargé
 document.addEventListener('DOMContentLoaded', async () => {
     const pokemonName = getQueryParam('name');
 
     if (pokemonName) {
         try {
+            // Effectue une requête à l'API pour récupérer les données du Pokémon
             const response = await fetch(`/api/pokemon/${pokemonName.toLowerCase()}`);
-            if (!response.ok) throw new Error('Pokémon non trouvé');
+            if (!response.ok) throw new Error('Pokémon not found');
 
             const pokemon = await response.json();
             displayPokemonDetails(pokemon);
 
+            // Affiche les coéquipiers
             const teammatesHTML = await displayTeammates(pokemon.teammates);
             document.querySelector('.pokemon-teammates ul').innerHTML = teammatesHTML;
             
+            // Affiche les attaques
             const movesHTML = await displayMoves(pokemon.moves);
             document.querySelector('.pokemon-moves ul').innerHTML = movesHTML;
         
         } catch (error) {
             console.error(error);
-            document.getElementById('pokemon-details').innerHTML = '<p>Erreur lors de la récupération des détails.</p>';
+            document.getElementById('pokemon-details').innerHTML = '<p>Error.</p>';
         }
     }
 });
 
+// Fonction pour afficher les capacités du Pokémon
 function displayAbilities(abilities) {
     if (!abilities || typeof abilities !== 'object' || Object.keys(abilities).length === 0) {
         return '<li>No abilities available</li>';
@@ -312,6 +333,7 @@ function displayAbilities(abilities) {
         .join('');
 }
 
+// Fonction pour afficher les objets (items)
 function displayItems(items) {
     if (!items || items.length === 0) return '<li>No items available</li>';
 
@@ -319,6 +341,7 @@ function displayItems(items) {
     return sortedItems;
 }
 
+// Fonction pour afficher les attaques
 async function displayMoves(moves) {
     if (!moves || typeof moves !== 'object') return '<li>No moves available</li>';
     const sortedMoves = Object.entries(moves)
@@ -333,6 +356,8 @@ async function displayMoves(moves) {
     return normalizedMoves.map(item => `<li>${item.move}: ${item.value.toFixed(2)}%</li>`).join('');
 }
 
+
+// Fonction pour afficher les coéquipiers (teammates)
 async function displayTeammates(teammates) {
     if (!teammates || typeof teammates !== 'object') return '<li>Aucun teammate disponible</li>';
     const sortedTeammates = Object.entries(teammates)
@@ -345,6 +370,7 @@ async function displayTeammates(teammates) {
         value: totalValue > 0 ? (value / totalValue) * 100 : 0  
     }));
 
+    // Génère un HTML pour chaque coéquipier avec son image
     const teammateList = await Promise.all(
         normalizedTeammates.map(async ({ name, value }) => {
             const imageUrl = await getTeammateImage(name);
@@ -362,6 +388,7 @@ async function displayTeammates(teammates) {
     return teammateList.filter(item => item !== null).join('');
 }
 
+// Fonction pour récupérer l'image d'un coéquipier
 async function getTeammateImage(name) {
     try {
         const response = await fetch(`/api/pokemon/${name.toLowerCase()}`);
@@ -376,6 +403,7 @@ async function getTeammateImage(name) {
     }
 }
 
+// Fonction pour afficher les répartitions (spreads)
 function displaySpreads(spreads) {
     if (!spreads || spreads.length === 0) return '<li>Aucun spread disponible</li>';
     const sortedSpreads = Object.entries(spreads)
@@ -387,8 +415,10 @@ function displaySpreads(spreads) {
         value: totalValue > 0 ? (value / totalValue) * 100 : 0 
     }));
 
+
+    // Retourne un HTML détaillé pour chaque répartition
     return normalizedSpreads.map(({ spread, value }) => {
-        const [nature, ivs] = spread.split(':');
+        const [nature, ivs] = spread.split(':'); // Sépare la nature et les IVs
         return `
             <li style="display: flex; align-items: center; justify-content: space-between; padding: 5px 0;">
                 <div style="flex: 1; text-align: left; font-weight: bold;">
