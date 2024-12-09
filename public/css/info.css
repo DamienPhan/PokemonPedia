@@ -197,3 +197,35 @@ ul li:hover {
     transform: translateY(0);
     box-shadow: 0 2px 4px var(--theme-shadow-color);
 }
+
+.delete-pokemon {
+    position: fixed;
+    top: 30px;
+    right:5px;
+    background-color: var(--theme-sidebar-color);
+    color: #ffffff;
+    border:none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px var(--theme-shadow-color);
+    transition: background-color 0.3s, transform 0.2s;
+    z-index: 1000;
+}
+
+.edit-pokemon {
+    position: fixed;
+    top: 70px;
+    right:5px;
+    background-color: var(--theme-sidebar-color);
+    color: #ffffff;
+    border:none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px var(--theme-shadow-color);
+    transition: background-color 0.3s, transform 0.2s;
+    z-index: 1000;
+}

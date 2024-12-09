@@ -452,3 +452,52 @@ function displaySpreads(spreads) {
         `;
     }).join('');
 }
+
+// Ajoute un gestionnaire d'événements pour supprimer le Pokémon
+document.getElementById('delete-button').addEventListener('click', async () => {
+    const pokemonName = getQueryParam('name'); // Récupère le nom du Pokémon dans l'URL
+
+    console.log("test");
+
+    if (!pokemonName) {
+        alert("Impossible de supprimer : le nom du Pokémon est introuvable.");
+        return;
+    }
+
+    const confirmation = confirm(`Voulez-vous vraiment supprimer ${pokemonName} ?`);
+    if (!confirmation) return;
+
+    try {
+        // Effectue une requête DELETE vers l'API
+        const response = await fetch(`/api/pokemon/${pokemonName.toLowerCase()}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Échec de la suppression.');
+        }
+
+        alert(`Le Pokémon ${pokemonName} a été supprimé avec succès !`);
+        // Redirige l'utilisateur après la suppression
+        window.location.href = '/html/home.html';
+    } catch (error) {
+        console.error('Erreur lors de la suppression du Pokémon :', error);
+        alert('Une erreur est survenue lors de la tentative de suppression du Pokémon.');
+    }
+});
+
+document.getElementById('edit-button').addEventListener('click', () => {
+    const pokemonName = getQueryParam('name'); // Récupère le nom du Pokémon
+    if (pokemonName) {
+        window.location.href = `/html/editPokemon.html?name=${pokemonName}`;
+    } else {
+        alert("Nom du Pokémon introuvable.");
+    }
+});
+
+// Fonction pour récupérer un paramètre de l'URL
+function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+

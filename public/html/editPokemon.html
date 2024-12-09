@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier un Pokémon</title>
+    <link rel="stylesheet" href="../css/addPokemon.css">
+</head>
+<body class="theme--dark">
+    <div class="container">
+        <h1>Modifier un Pokémon</h1>
+        <form id="edit-pokemon-form">
+
+            <label for="name">Nom du Pokémon:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="type1">Type 1:</label>
+            <select id="type1" name="type1" required>
+                <option value="fire">Feu</option>
+                <option value="water">Eau</option>
+                <option value="grass">Plante</option>
+                <option value="electric">Électrique</option>
+                <option value="poison">Poison</option>
+                <option value="bug">Insecte</option>
+                <option value="normal">Normal</option>
+                <option value="psychic">Psy</option>
+                <option value="fighting">Combat</option>
+                <option value="fairy">Fée</option>
+                <option value="rock">Roche</option>
+                <option value="ghost">Spectre</option>
+                <option value="ice">Glace</option>
+                <option value="dragon">Dragon</option>
+                <option value="dark">Ténèbres</option>
+                <option value="steel">Acier</option>
+                <option value="flying">Vol</option>
+                <option value="ground">Sol</option>
+                <option value="stelar">Stellaire</option>
+            </select>
+
+            <label for="type2">Type 2 (optionnel):</label>
+            <select id="type2" name="type2">
+                <option value="">Aucun</option>
+                <option value="fire">Feu</option>
+                <option value="water">Eau</option>
+                <option value="grass">Plante</option>
+                <option value="electric">Électrique</option>
+                <option value="poison">Poison</option>
+                <option value="bug">Insecte</option>
+                <option value="normal">Normal</option>
+                <option value="psychic">Psy</option>
+                <option value="fighting">Combat</option>
+                <option value="fairy">Fée</option>
+                <option value="rock">Roche</option>
+                <option value="ghost">Spectre</option>
+                <option value="ice">Glace</option>
+                <option value="dragon">Dragon</option>
+                <option value="dark">Ténèbres</option>
+                <option value="steel">Acier</option>
+                <option value="flying">Vol</option>
+                <option value="ground">Sol</option>
+                <option value="stelar">Stellaire</option>
+            </select>
+
+            <label for="hp">HP:</label>
+            <input type="number" id="hp" name="hp" required>
+
+            <label for="attack">Attaque:</label>
+            <input type="number" id="attack" name="attack" required>
+
+            <label for="defense">Défense:</label>
+            <input type="number" id="defense" name="defense" required>
+
+            <label for="spAtk">Attaque Spéciale:</label>
+            <input type="number" id="spAtk" name="spAtk" required>
+
+            <label for="spDef">Défense Spéciale:</label>
+            <input type="number" id="spDef" name="spDef" required>
+
+            <label for="speed">Vitesse:</label>
+            <input type="number" id="speed" name="speed" required>
+
+            <label for="image">Image (URL, optionnel):</label>
+            <input type="text" id="image" name="image">
+
+            <button type="submit">Modifier Pokémon</button>
+        </form>
+        <div id="status-message"></div>
+    </div>
+
+    <script src="../js/editPokemon.js"></script>
+</body>
+</html>

@@ -200,3 +200,44 @@ app.post('/api/teams', async (req, res) => {
         res.status(500).json({ message: 'Erreur lors de la sauvegarde de l\'équipe.' });
     }
 });
+
+// Route pour supprimer un Pokémon de la base de données
+app.delete('/api/pokemon/:name', async (req, res) => {
+    const pokemonName = req.params.name;
+
+    try {
+        // Supprimer le Pokémon correspondant au nom
+        const deletedPokemon = await Pokemon.findOneAndDelete({ PName: new RegExp(`^${pokemonName}$`, 'i') });
+
+        if (deletedPokemon) {
+            res.status(200).json({ message: `Le Pokémon "${deletedPokemon.PName}" a été supprimé avec succès.` });
+        } else {
+            res.status(404).json({ message: 'Pokémon non trouvé.' });
+        }
+    } catch (error) {
+        console.error('Erreur lors de la suppression du Pokémon:', error);
+        res.status(500).json({ message: 'Erreur serveur lors de la suppression du Pokémon.' });
+    }
+});
+
+app.put('/api/pokemon/:name', async (req, res) => {
+    const pokemonName = req.params.name;
+
+    try {
+        const updatedPokemon = await Pokemon.findOneAndUpdate(
+            { PName: new RegExp(`^${pokemonName}$`, 'i') },
+            req.body,
+            { new: true }
+        );
+
+        if (updatedPokemon) {
+            res.json({ message: 'Pokémon modifié avec succès.', pokemon: updatedPokemon });
+        } else {
+            res.status(404).send('Pokémon non trouvé.');
+        }
+        console.log("passé en param")
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du Pokémon:', error);
+        res.status(500).send('Erreur serveur.');
+    }
+});
