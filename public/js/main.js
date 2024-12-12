@@ -53,3 +53,33 @@ function displayPokemonDetails(pokemon) {
         <img src="${pokemon.image}" alt="${pokemon.name}" />
     `;
 }
+
+// Route pour obtenir des suggestions basées sur l'équipe actuelle
+app.post('/api/pokemon/teambuild/suggestion', async (req, res) => {
+    const { currentTeam } = req.body;
+
+    if (!currentTeam || !Array.isArray(currentTeam)) {
+        return res.status(400).json({ message: 'L\'équipe actuelle est requise.' });
+    }
+
+    try {
+        // Trouver les Pokémon qui ne sont pas dans l'équipe actuelle
+        const suggestions = await Pokemon.find(
+            { PName: { $nin: currentTeam } }, // Exclure les Pokémon déjà dans l'équipe
+            { PName: 1, Image: 1, _id: 0 } // Renvoyer seulement `PName` et `Image`
+        )
+        .limit(10); // Limiter le nombre de suggestions à 10
+
+        // Retourner les suggestions formatées
+        const formattedSuggestions = suggestions.map((pokemon) => ({
+            name: pokemon.PName,
+            image: pokemon.Image || 'default.png',
+            synergyScore: Math.floor(Math.random() * 100) + 1, // Simuler un score de synergie
+        }));
+
+        res.status(200).json(formattedSuggestions);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des suggestions:', error);
+        res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});

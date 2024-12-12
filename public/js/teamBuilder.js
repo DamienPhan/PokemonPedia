@@ -57,7 +57,7 @@ saveTeamButton.addEventListener('click', () => {
         return;
     }
 
-    fetch('/api/teams', {
+    fetch('/api/teams/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamName, members: currentTeam.map(pokemon => pokemon.name) })
@@ -111,24 +111,48 @@ function loadSuggestions() {
     fetch('/api/pokemon/teambuild/suggestion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentTeam: currentTeam.map(p => p.name) })
+        body: JSON.stringify({ currentTeam: currentTeam.map((pokemon) => pokemon.name) }),
     })
-    .then(response => response.json())
-    .then(suggestions => {
-        // Afficher les suggestions avec un style vertical
-        suggestionList.innerHTML = suggestions.map(pokemon => `
-            <li class="suggestion-item" onclick="addToTeam({ name: '${pokemon.name}', image: '${pokemon.image}' })">
-                <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                    <img src="/images/${pokemon.image}" alt="${pokemon.name}" style="width: 50px; height: 50px; margin-right: 10px;" />
-                    <div>
-                        <strong>${pokemon.name}</strong><br>
-                        <span>Synergie : ${pokemon.synergyScore}</span>
-                    </div>
-                </div>
-            </li>
-        `).join('');
-    })
-    .catch(error => {
-        console.error('Erreur lors du chargement des suggestions basées sur la synergie :', error);
-    });
+        .then((response) => {
+            if (!response.ok) throw new Error('Erreur lors de la récupération des suggestions');
+            return response.json();
+        })
+        .then((suggestions) => {
+            if (suggestions.length === 0) {
+                suggestionList.innerHTML = '<li>Aucune suggestion disponible</li>';
+                return;
+            }
+
+            suggestionList.innerHTML = suggestions
+                .map(
+                    (pokemon) => `
+                    <li class="suggestion-item" onclick="addToTeam({ name: '${pokemon.name}', image: '${pokemon.image}' })">
+                        <div style="display: flex; align-items: center;">
+                            <img src="/images/${pokemon.image}" alt="${pokemon.name}" style="width: 50px; height: 50px; margin-right: 10px;" />
+                            <div>
+                                <strong>${pokemon.name}</strong><br>
+                                <span>Synergie : ${pokemon.synergyScore}</span>
+                            </div>
+                        </div>
+                    </li>`
+                )
+                .join('');
+        })
+        .catch((error) => {
+            console.error('Erreur lors du chargement des suggestions :', error);
+            suggestionList.innerHTML = '<li>Erreur lors du chargement des suggestions.</li>';
+        });
 }
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateTeamList(); // S'assure que la liste de l'équipe est à jour.
+});
+
+// Redirection vers la page où toutes les équipes sont listées
+document.getElementById('view-teams-button').addEventListener('click', () => {
+    window.location.href = '/html/viewTeams.html';
+});
+

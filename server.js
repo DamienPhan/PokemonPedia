@@ -174,33 +174,6 @@ app.post('/api/pokemon', async (req, res) => {
 });
 
 
-// Route pour sauvegarder une équipe Pokémon
-app.post('/api/teams', async (req, res) => {
-    const { teamName, members } = req.body;
-
-    // Validation des données d'entrée
-    if (!teamName || !members || !Array.isArray(members) || members.length === 0) {
-        return res.status(400).json({ message: 'Le nom de l\'équipe et les membres sont requis.' });
-    }
-
-    try {
-        // Créer une nouvelle équipe avec les données reçues
-        const newTeam = new Team({
-            teamName,
-            members,
-            timestamp: Date.now()
-        });
-
-        // Sauvegarder l'équipe dans la base de données
-        const savedTeam = await newTeam.save();
-
-        res.status(201).json({ message: 'Équipe sauvegardée avec succès.', team: savedTeam });
-    } catch (error) {
-        console.error('Erreur lors de la sauvegarde de l\'équipe :', error);
-        res.status(500).json({ message: 'Erreur lors de la sauvegarde de l\'équipe.' });
-    }
-});
-
 // Route pour supprimer un Pokémon de la base de données
 app.delete('/api/pokemon/:name', async (req, res) => {
     const pokemonName = req.params.name;
@@ -239,6 +212,130 @@ app.put('/api/pokemon/:name', async (req, res) => {
     } catch (error) {
         console.error('Erreur lors de la mise à jour du Pokémon:', error);
         res.status(500).send('Erreur serveur.');
+    }
+});
+
+app.post('/api/pokemon/teambuild/suggestion', async (req, res) => {
+    const { currentTeam } = req.body;
+
+    if (!currentTeam || !Array.isArray(currentTeam)) {
+        return res.status(400).json({ message: 'L\'équipe actuelle est requise.' });
+    }
+
+    try {
+        // Trouver les Pokémon qui ne sont pas dans l'équipe actuelle
+        const suggestions = await Pokemon.find(
+            { PName: { $nin: currentTeam } }, // Exclure les Pokémon déjà dans l'équipe
+            { PName: 1, Teammates: 1, _id: 0 } // Inclure les coéquipiers pour le calcul de synergie
+        )
+        .limit(50); // Augmenter la limite initiale pour plus de résultats à trier
+
+        // Calculer la synergie
+        const formattedSuggestions = suggestions.map((pokemon) => {
+            let synergyScore = 0;
+
+            if (pokemon.Teammates) {
+                // Vérifier combien de coéquipiers de la base sont déjà dans l'équipe actuelle
+                synergyScore = Object.keys(pokemon.Teammates)
+                    .filter(teammate => currentTeam.includes(teammate))
+                    .reduce((sum, teammate) => sum + pokemon.Teammates[teammate], 0); // Ajouter leur fréquence
+            }
+
+            return {
+                name: pokemon.PName,
+                image: pokemon.Image || 'default.png',
+                synergyScore: synergyScore, // Utiliser le score calculé
+            };
+        });
+
+        // Trier les suggestions par score de synergie décroissant
+        const sortedSuggestions = formattedSuggestions.sort((a, b) => b.synergyScore - a.synergyScore);
+
+        // Renvoyer les 10 meilleurs résultats
+        res.status(200).json(sortedSuggestions.slice(0, 10));
+    } catch (error) {
+        console.error('Erreur lors de la récupération des suggestions :', error);
+        res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
+
+
+// Route pour sauvegarder une équipe Pokémon
+app.post('/api/teams/save', async (req, res) => {
+    const { teamName, members } = req.body;
+
+    // Validation des données d'entrée
+    if (!teamName || !members || !Array.isArray(members) || members.length === 0) {
+        return res.status(400).json({ message: 'Le nom de l\'équipe et les membres sont requis.' });
+    }
+
+    try {
+        // Récupérer les informations complètes des Pokémon dans l'équipe
+        const pokemonDetails = await Promise.all(
+            members.map(async (member) => {
+                const pokemon = await Pokemon.findOne({ PName: member }, { PName: 1, Image: 1 });
+                if (!pokemon) throw new Error(`Pokémon "${member}" introuvable.`);
+                return { name: pokemon.PName, image: pokemon.Image };
+            })
+        );
+
+        // Créer une nouvelle équipe avec les données complètes
+        const newTeam = new Team({
+            teamName,
+            members: pokemonDetails,
+            timestamp: Date.now()
+        });
+
+        // Sauvegarder l'équipe dans la base de données
+        const savedTeam = await newTeam.save();
+
+        res.status(201).json({ message: 'Équipe sauvegardée avec succès.', team: savedTeam });
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde de l\'équipe :', error);
+        res.status(500).json({ message: 'Erreur lors de la sauvegarde de l\'équipe.' });
+    }
+});
+
+// Route pour récupérer toutes les équipes enrichies avec les images des Pokémon
+app.get('/api/teams', async (req, res) => {
+    try {
+        // Récupérer toutes les équipes triées par date de création décroissante
+        const teams = await Team.find().sort({ timestamp: -1 });
+
+        // Parcourir chaque équipe pour enrichir ses membres
+        const enrichedTeams = await Promise.all(
+            teams.map(async (team) => {
+                const enrichedMembers = await Promise.all(
+                    team.members.map(async (memberName) => {
+                        // Trouver chaque Pokémon par son nom
+                        const pokemon = await Pokemon.findOne(
+                            { PName: memberName },
+                            { PName: 1, Image: 1 } // On récupère uniquement le nom et l'image
+                        );
+
+                        return {
+                            name: pokemon?.PName || memberName, // Fallback au nom original si non trouvé
+                            image: pokemon?.Image ? `/images/${pokemon.Image}` : '/images/default.png', // Fallback à une image par défaut
+                        };
+                    })
+                );
+
+                // Retourner l'équipe enrichie avec les membres complets
+                return {
+                    _id: team._id,
+                    teamName: team.teamName,
+                    members: enrichedMembers,
+                    timestamp: team.timestamp,
+                };
+            })
+        );
+
+        // Retourner les équipes enrichies
+        res.status(200).json(enrichedTeams);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des équipes :', error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des équipes.' });
     }
 });
 

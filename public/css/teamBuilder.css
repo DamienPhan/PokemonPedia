@@ -76,15 +76,27 @@ button:disabled {
 }
 
 .suggestion-item {
-    display: block;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    background: #2e2e3e;
+    border-radius: 8px;
     padding: 10px;
     margin-bottom: 10px;
+    transition: background-color 0.3s;
     cursor: pointer;
-    transition: background-color 0.2s;
 }
 
 .suggestion-item:hover {
-    background-color: #f0f0f0;
+    background: #3e3e5e;
 }
+
+.suggestion-item img {
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.suggestion-item div {
+    display: flex;
+    flex-direction: column;
+}
+

@@ -1,0 +1,140 @@
+/* Applique le thème sombre */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1e1e2f;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+/* Conteneur principal */
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #2e2e3e;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Titre de la page */
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #f5c542;
+    text-transform: uppercase;
+}
+
+/* Liste des équipes */
+#teams-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Chaque équipe */
+.team-item {
+    background-color: #3e3e5e;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    padding: 15px;
+    transition: background-color 0.3s;
+    display: flex; /* Ajout pour aligner les images et le texte */
+    align-items: center;
+    gap: 15px; /* Espacement entre les éléments */
+}
+
+.team-item:hover {
+    background-color: #4c4c7a;
+}
+
+/* Conteneur des informations d'équipe */
+.team-info {
+    flex-grow: 1;
+}
+
+/* Nom de l'équipe */
+.team-item h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #f5c542;
+}
+
+/* Membres de l'équipe */
+.team-members {
+    margin: 10px 0 0;
+    font-size: 1rem;
+    color: #dcdcdc;
+    display: flex; /* Pour aligner les images avec les noms */
+    flex-wrap: wrap;
+    gap: 8px; /* Espacement entre les membres */
+}
+
+.team-members img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    margin-right: 5px;
+}
+
+.team-members span {
+    display: flex;
+    align-items: center;
+    background-color: #5656a4;
+    border-radius: 20px;
+    padding: 5px 10px;
+    color: #fff;
+    gap: 5px;
+}
+
+.team-members img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #fff;
+}
+
+/* Date de création */
+.timestamp {
+    font-size: 0.9rem;
+    color: #b0b0b0;
+    margin-top: 10px;
+}
+
+/* Bouton retour */
+button {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1rem;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+
+.back-button {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    text-align: center;
+}
+
+.back-button:hover {
+    background-color: #45a049;
+}

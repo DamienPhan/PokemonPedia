@@ -11,7 +11,7 @@ createTeamButton.addEventListener('click', () => {
 
 // Redirection vers la page des équipes sauvegardées
 viewTeamsButton.addEventListener('click', () => {
-    window.location.href = '/saved-teams.html'; // Remplacez par le chemin de votre page
+    window.location.href = '/html/viewTeams.html'; // Remplacez par le chemin de votre page
 });
 
 // Redirection vers la page des pokémons sauvegardées
