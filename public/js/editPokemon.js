@@ -1,121 +1,70 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    const pokemonName = getQueryParam('name');
-    console.log("pokemonName récupéré depuis l'URL : ", pokemonName);
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pokemonName = urlParams.get('name'); // Récupère le paramètre 'name' dans l'URL
 
-    try {
-        const response = await fetch(`/api/pokemon/${pokemonName}`);
+    if (!pokemonName) {
+        document.getElementById('status-message').innerText = 'Aucun Pokémon sélectionné pour modification.';
+        console.log('Paramètre "name" manquant dans l\'URL.');
+        return;
+    }
 
-        if (!response.ok) throw new Error('Aucun Pokémon trouvé');
+    console.log(`Modification du Pokémon : ${pokemonName}`);
 
-        const pokemon = await response.json();
-        console.log("Données du Pokémon récupérées : ", pokemon);
-
-        if (pokemon) {
+    fetch(`/api/pokemon/${pokemonName}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Erreur lors de la récupération des données du Pokémon.');
+            return response.json();
+        })
+        .then(pokemon => {
             document.getElementById('name').value = pokemon.name;
+            document.getElementById('type1').value = pokemon.type1 || '';
+            document.getElementById('type2').value = pokemon.type2 || '';
             document.getElementById('hp').value = pokemon.stats.hp;
             document.getElementById('attack').value = pokemon.stats.attack;
             document.getElementById('defense').value = pokemon.stats.defense;
             document.getElementById('spAtk').value = pokemon.stats.spAtk;
             document.getElementById('spDef').value = pokemon.stats.spDef;
             document.getElementById('speed').value = pokemon.stats.speed;
-
-            // Remplir les types avec des options
-            const type1Select = document.getElementById('type1');
-            const type2Select = document.getElementById('type2');
-            fillTypeOptions(type1Select);
-            fillTypeOptions(type2Select);
-
-            type1Select.value = pokemon.type1;
-            type2Select.value = pokemon.type2 || "";
-
-            // Remplir l'image (sans l'extension ni le chemin)
-            if (pokemon.image) {
-                document.getElementById('image').value = pokemon.image.replace("images/", "").replace(".png", "");
-            }
-        } else {
-            document.getElementById('status-message').textContent = 'Aucun Pokémon trouvé avec cet ID.';
-        }
-    } catch (error) {
-        console.error('Erreur lors de la récupération des données du Pokémon:', error);
-        document.getElementById('status-message').textContent = 'Erreur lors du chargement des informations du Pokémon.';
-    }
-});
-
-document.getElementById('edit-pokemon-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
-
-    const pokemonData = {
-        name: document.getElementById('name').value.trim(),
-        type1: document.getElementById('type1').value,
-        type2: document.getElementById('type2').value || null, // Si non défini, envoyer null
-        stats: {
-            hp: parseInt(document.getElementById('hp').value),
-            attack: parseInt(document.getElementById('attack').value),
-            defense: parseInt(document.getElementById('defense').value),
-            spAtk: parseInt(document.getElementById('spAtk').value),
-            spDef: parseInt(document.getElementById('spDef').value),
-            speed: parseInt(document.getElementById('speed').value),
-        },
-        image: document.getElementById('image').value.trim() 
-            ? `images/${document.getElementById('image').value.trim()}.png`
-            : null
-    };
-
-    console.log('Données soumises:', pokemonData);
-
-    try {
-        const response = await fetch(`/api/pokemon/${getQueryParam('name')}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pokemonData),
+            document.getElementById('image').value = pokemon.image || '';
+        })
+        .catch(error => {
+            console.error('Erreur lors de la récupération des données :', error);
+            document.getElementById('status-message').innerText = 'Erreur lors de la récupération des données.';
         });
 
-        if (response.ok) {
-            document.getElementById('status-message').textContent = 'Pokémon modifié avec succès!';
-            console.log("Modification réussie:", await response.json());
-        } else {
-            const errorDetails = await response.json();
-            console.error("Erreur lors de la modification:", errorDetails);
-            document.getElementById('status-message').textContent = 'Erreur lors de la modification.';
+    document.getElementById('edit-pokemon-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const updatedPokemon = {
+            name: document.getElementById('name').value,
+            type1: document.getElementById('type1').value,
+            type2: document.getElementById('type2').value || null,
+            hp: parseInt(document.getElementById('hp').value, 10),
+            attack: parseInt(document.getElementById('attack').value, 10),
+            defense: parseInt(document.getElementById('defense').value, 10),
+            spAtk: parseInt(document.getElementById('spAtk').value, 10),
+            spDef: parseInt(document.getElementById('spDef').value, 10),
+            speed: parseInt(document.getElementById('speed').value, 10),
+            image: document.getElementById('image').value || '',
+        };
+
+        try {
+            const response = await fetch(`/api/pokemon/${pokemonName}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedPokemon),
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Erreur inconnue');
+
+            alert(result.message); // Afficher un message d'alerte
+            window.history.back(); // Rediriger vers la page précédente
+        } catch (error) {
+            console.error('Erreur lors de la modification du Pokémon :', error);
+            document.getElementById('status-message').innerText = 'Erreur lors de la modification du Pokémon.';
         }
-    } catch (error) {
-        console.error('Erreur:', error);
-        document.getElementById('status-message').textContent = 'Erreur lors de la modification.';
-    }
-});
-
-function getQueryParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-}
-
-function fillTypeOptions(selectElement) {
-    const typeTranslations = {
-        "Fire": "Feu",
-        "Water": "Eau",
-        "Grass": "Plante",
-        "Electric": "Électrique",
-        "Poison": "Poison",
-        "Bug": "Insecte",
-        "Normal": "Normal",
-        "Psychic": "Psy",
-        "Fighting": "Combat",
-        "Fairy": "Fée",
-        "Rock": "Roche",
-        "Ghost": "Spectre",
-        "Ice": "Glace",
-        "Dragon": "Dragon",
-        "Dark": "Ténèbres",
-        "Steel": "Acier",
-        "Flying": "Vol",
-        "Ground": "Sol",
-        "Stelar": "Stellaire"
-    };
-
-    Object.entries(typeTranslations).forEach(([type, translation]) => {
-        const option = document.createElement("option");
-        option.value = type;
-        option.textContent = translation;
-        selectElement.appendChild(option);
     });
-}
+});

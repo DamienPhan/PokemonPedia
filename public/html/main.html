@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body class="theme--dark">
+    <!-- Button to return to the home page -->
+    <button onclick="window.location.href = '/html/home.html';" class="back-button">Retour à la page d'accueil</button>
     <div class="container">
         <h1>Recherche de Pokémon</h1>
         <input type="text" id="search-bar" placeholder="Entrez le nom d'un Pokémon" oninput="searchPokemon()" autocomplete="off">
@@ -15,6 +17,8 @@
 
         <!-- Button to navigate to the Add Pokémon page -->
         <button onclick="window.location.href = '/html/addPokemon.html';">Ajouter un Pokémon</button>
+
+        
     </div>
 
     <script src="../js/main.js"></script>

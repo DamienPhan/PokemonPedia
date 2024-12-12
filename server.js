@@ -1,3 +1,4 @@
+// ------------------- Importations et configuration -------------------
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -10,38 +11,35 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Configurer les dossiers statiques pour `public` et `ressources`
+// Dossiers statiques
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/ressources', express.static(path.join(__dirname, 'ressources')));
 app.use('/images', express.static(path.join(__dirname, 'ressources/pokedex')));
 
 
-// Démarrer le serveur
-app.listen(PORT, () => {
-    console.log(`Serveur en écoute sur le port ${PORT}`);
-});
-
-// Connexion à MongoDB
+// ------------------- Connexion à MongoDB -------------------
 const mongoURI = 'mongodb://localhost:27017/PokemonDB';
 
 mongoose.connect(mongoURI)
     .then(() => console.log("Connecté à MongoDB"))
     .catch(err => console.error("Erreur de connexion à MongoDB :", err));
 
-// Définition du modèle Pokémon
+// ------------------- Définition des modèles -------------------
+
+// Modèle Pokémon
 const pokemonSchema = new mongoose.Schema({
     PName: String,
-    Items: Object, 
+    Items: Object,
     "Raw count": Number,
-    Spreads: Object, 
+    Spreads: Object,
     "Tera Types": Object,
-    Teammates: Object, 
+    Teammates: Object,
     "Viability Ceiling": [Number],
-    Abilities: Object, 
+    Abilities: Object,
     "Checks and Counters": Object,
     usage: Number,
-    Moves: Object, 
-    Happiness: Object, 
+    Moves: Object,
+    Happiness: Object,
     Image: String,
     Index: Number,
     "Type 1": String,
@@ -57,64 +55,47 @@ const pokemonSchema = new mongoose.Schema({
 
 const Pokemon = mongoose.model('Pokemon', pokemonSchema);
 
-// TEAMS
+// Modèle Équipe
 const teamSchema = new mongoose.Schema({
     teamName: String,
     members: [String],
     timestamp: { type: Date, default: Date.now }
-}, { collection: 'Teams', versionKey: false }); // Désactive le champ __v
-
+}, { collection: 'Teams', versionKey: false });
 
 const Team = mongoose.model('Team', teamSchema);
 
+// ------------------- Routes Pokémon -------------------
+
+// Obtenir les détails d'un Pokémon
 app.get('/api/pokemon/:name', async (req, res) => {
-    const pokemonName = req.params.name.toLowerCase();
-
-    // console.log(`Recherche du Pokémon : ${pokemonName}`); // Log pour le nom recherché
-
     try {
-        const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
+        const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${req.params.name}$`, 'i') });
+        if (!pokemon) return res.status(404).send('Pokémon non trouvé');
 
-        //console.log("Données récupérées depuis MongoDB:", pokemon); // Log pour afficher les données récupérées
-
-        if (pokemon) {
-            //console.log('Données Pokémon récupérées depuis MongoDB:', pokemon); // Log pour vérifier les données
-            res.json({
-                name: pokemon.PName,
-                items: pokemon.Items || {},
-                rawCount: pokemon["Raw count"] || 0,
-                spreads: pokemon.Spreads || {},
-                teraTypes: pokemon["Tera Types"] || {},
-                teammates: pokemon.Teammates || {},
-                viabilityCeiling: pokemon["Viability Ceiling"] || [],
-                abilities: pokemon.Abilities || {},
-                checksAndCounters: pokemon["Checks and Counters"] || {},
-                usage: pokemon.usage || 0,
-                moves: pokemon.Moves || {},
-                happiness: pokemon.Happiness || {}, // Champ Happiness transmis directement
-                image: pokemon.Image || '',
-                index: pokemon.Index || 0,
-                type1: pokemon["Type 1"] || '',
-                type2: pokemon["Type 2"] || '',
-                total: pokemon.Total || 0,
-                stats: {
-                    hp: pokemon.HP || 0,
-                    attack: pokemon.Attack || 0,
-                    defense: pokemon.Defense || 0,
-                    spAtk: pokemon.SpAtk || 0,
-                    spDef: pokemon.SpDef || 0,
-                    speed: pokemon.Speed || 0
-                }
-            });
-        } else {
-            res.status(404).send('Pokémon non trouvé');
-        }
+        res.json({
+            name: pokemon.PName,
+            items: pokemon.Items || {},
+            image: `${pokemon.Image || 'default.png'}`,
+            stats: {
+                hp: pokemon.HP || 0,
+                attack: pokemon.Attack || 0,
+                defense: pokemon.Defense || 0,
+                spAtk: pokemon.SpAtk || 0,
+                spDef: pokemon.SpDef || 0,
+                speed: pokemon.Speed || 0
+            },
+            type1: pokemon["Type 1"],
+            type2: pokemon["Type 2"],
+            usage: pokemon.usage || 0,
+            abilities: pokemon.Abilities || {}
+        });
     } catch (error) {
         console.error('Erreur lors de la récupération du Pokémon:', error);
         res.status(500).send('Erreur serveur');
     }
 });
 
+// Rechercher des suggestions de Pokémon
 app.get('/api/pokemon/search/suggestion/:query', async (req, res) => {
     const query = req.params.query.toLowerCase();
 
@@ -138,33 +119,29 @@ app.get('/api/pokemon/search/suggestion/:query', async (req, res) => {
     }
 });
 
-// Route pour ajouter un Pokémon à la base de données
-app.post('/api/pokemon', async (req, res) => {
-    const {
-        name, type1, type2, hp, attack, defense, spAtk, spDef, speed, image
-    } = req.body;
 
-    // Vérifier que tous les champs nécessaires sont présents
+// Ajouter un Pokémon
+app.post('/api/pokemon', async (req, res) => {
+    const { name, type1, type2, hp, attack, defense, spAtk, spDef, speed, image } = req.body;
+
     if (!name || !type1 || !hp || !attack || !defense || !spAtk || !spDef || !speed) {
         return res.status(400).send('Tous les champs requis doivent être remplis.');
     }
 
-    const newPokemon = new Pokemon({
-        PName: name,
-        "Type 1": type1,
-        "Type 2": type2 || '', // Type 2 peut être vide
-        HP: hp,
-        Attack: attack,
-        Defense: defense,
-        SpAtk: spAtk,
-        SpDef: spDef,
-        Speed: speed,
-        Image: image || '', // Si pas d'image, mettre une valeur vide
-        Total: hp + attack + defense + spAtk + spDef + speed, // Exemple simple pour le total
-    });
-
     try {
-        // Enregistrer le Pokémon dans MongoDB
+        const newPokemon = new Pokemon({
+            PName: name,
+            "Type 1": type1,
+            "Type 2": type2 || '',
+            HP: hp,
+            Attack: attack,
+            Defense: defense,
+            SpAtk: spAtk,
+            SpDef: spDef,
+            Speed: speed,
+            Image: image || '',
+            Total: hp + attack + defense + spAtk + spDef + speed
+        });
         await newPokemon.save();
         res.status(201).send('Pokémon ajouté avec succès!');
     } catch (error) {
@@ -173,91 +150,52 @@ app.post('/api/pokemon', async (req, res) => {
     }
 });
 
-
-// Route pour supprimer un Pokémon de la base de données
+// Supprimer un Pokémon
 app.delete('/api/pokemon/:name', async (req, res) => {
-    const pokemonName = req.params.name;
-
     try {
-        // Supprimer le Pokémon correspondant au nom
-        const deletedPokemon = await Pokemon.findOneAndDelete({ PName: new RegExp(`^${pokemonName}$`, 'i') });
+        const deletedPokemon = await Pokemon.findOneAndDelete({ PName: new RegExp(`^${req.params.name}$`, 'i') });
+        if (!deletedPokemon) return res.status(404).send('Pokémon non trouvé');
 
-        if (deletedPokemon) {
-            res.status(200).json({ message: `Le Pokémon "${deletedPokemon.PName}" a été supprimé avec succès.` });
-        } else {
-            res.status(404).json({ message: 'Pokémon non trouvé.' });
-        }
+        res.send(`Le Pokémon "${deletedPokemon.PName}" a été supprimé.`);
     } catch (error) {
         console.error('Erreur lors de la suppression du Pokémon:', error);
-        res.status(500).json({ message: 'Erreur serveur lors de la suppression du Pokémon.' });
+        res.status(500).send('Erreur serveur');
     }
 });
 
+// Mettre à jour un Pokémon
 app.put('/api/pokemon/:name', async (req, res) => {
-    const pokemonName = req.params.name;
-    console.log('Données envoyées pour modification:', req.body);
-
     try {
         const updatedPokemon = await Pokemon.findOneAndUpdate(
-            { PName: new RegExp(`^${pokemonName}$`, 'i') },
-            req.body,
-            { new: true }
+            { PName: new RegExp(`^${req.params.name}$`, 'i') },
+            {
+                "Type 1": req.body.type1,
+                "Type 2": req.body.type2 || null,
+                HP: req.body.hp,
+                Attack: req.body.attack,
+                Defense: req.body.defense,
+                SpAtk: req.body.spAtk,
+                SpDef: req.body.spDef,
+                Speed: req.body.speed,
+                Image: req.body.image || ''
+            },
+            { new: true, runValidators: true }
         );
 
-        if (updatedPokemon) {
-            console.log({ message: 'Pokémon modifié avec succès.', pokemon: updatedPokemon });
-        } else {
-            console.log(404).send('Pokémon non trouvé.');
-        }
-    } catch (error) {
-        console.error('Erreur lors de la mise à jour du Pokémon:', error);
-        res.status(500).send('Erreur serveur.');
-    }
-});
+        if (!updatedPokemon) return res.status(404).json({ message: 'Pokémon non trouvé.' });
 
-app.post('/api/pokemon/teambuild/suggestion', async (req, res) => {
-    const { currentTeam } = req.body;
-
-    if (!currentTeam || !Array.isArray(currentTeam)) {
-        return res.status(400).json({ message: 'L\'équipe actuelle est requise.' });
-    }
-
-    try {
-        // Trouver les Pokémon qui ne sont pas dans l'équipe actuelle
-        const suggestions = await Pokemon.find(
-            { PName: { $nin: currentTeam } }, // Exclure les Pokémon déjà dans l'équipe
-            { PName: 1, Teammates: 1, _id: 0 } // Inclure les coéquipiers pour le calcul de synergie
-        )
-        .limit(50); // Augmenter la limite initiale pour plus de résultats à trier
-
-        // Calculer la synergie
-        const formattedSuggestions = suggestions.map((pokemon) => {
-            let synergyScore = 0;
-
-            if (pokemon.Teammates) {
-                // Vérifier combien de coéquipiers de la base sont déjà dans l'équipe actuelle
-                synergyScore = Object.keys(pokemon.Teammates)
-                    .filter(teammate => currentTeam.includes(teammate))
-                    .reduce((sum, teammate) => sum + pokemon.Teammates[teammate], 0); // Ajouter leur fréquence
-            }
-
-            return {
-                name: pokemon.PName,
-                image: pokemon.Image || 'default.png',
-                synergyScore: synergyScore, // Utiliser le score calculé
-            };
+        res.status(200).json({
+            message: `Le Pokémon "${req.params.name}" a été modifié avec succès.`,
+            pokemon: updatedPokemon
         });
-
-        // Trier les suggestions par score de synergie décroissant
-        const sortedSuggestions = formattedSuggestions.sort((a, b) => b.synergyScore - a.synergyScore);
-
-        // Renvoyer les 10 meilleurs résultats
-        res.status(200).json(sortedSuggestions.slice(0, 10));
     } catch (error) {
-        console.error('Erreur lors de la récupération des suggestions :', error);
+        console.error('Erreur lors de la mise à jour du Pokémon :', error);
         res.status(500).json({ message: 'Erreur serveur.' });
     }
 });
+
+
+
 
 
 
@@ -265,30 +203,25 @@ app.post('/api/pokemon/teambuild/suggestion', async (req, res) => {
 app.post('/api/teams/save', async (req, res) => {
     const { teamName, members } = req.body;
 
-    // Validation des données d'entrée
+    // Validation des données
     if (!teamName || !members || !Array.isArray(members) || members.length === 0) {
+        console.error('Validation échouée :', { teamName, members });
         return res.status(400).json({ message: 'Le nom de l\'équipe et les membres sont requis.' });
     }
 
     try {
-        // Récupérer les informations complètes des Pokémon dans l'équipe
-        const pokemonDetails = await Promise.all(
-            members.map(async (member) => {
-                const pokemon = await Pokemon.findOne({ PName: member }, { PName: 1, Image: 1 });
-                if (!pokemon) throw new Error(`Pokémon "${member}" introuvable.`);
-                return { name: pokemon.PName, image: pokemon.Image };
-            })
-        );
+        // Vérifier que les membres sont uniquement des noms
+        const memberNames = members.map(member => member.name || member); // Si un objet est passé, récupère `name`
 
-        // Créer une nouvelle équipe avec les données complètes
+        // Créer une nouvelle équipe
         const newTeam = new Team({
             teamName,
-            members: pokemonDetails,
+            members: memberNames, // Sauvegarde uniquement les noms
             timestamp: Date.now()
         });
 
-        // Sauvegarder l'équipe dans la base de données
         const savedTeam = await newTeam.save();
+        console.log('Équipe sauvegardée avec succès :', savedTeam);
 
         res.status(201).json({ message: 'Équipe sauvegardée avec succès.', team: savedTeam });
     } catch (error) {
@@ -296,6 +229,7 @@ app.post('/api/teams/save', async (req, res) => {
         res.status(500).json({ message: 'Erreur lors de la sauvegarde de l\'équipe.' });
     }
 });
+
 
 // Route pour récupérer toutes les équipes enrichies avec les images des Pokémon
 app.get('/api/teams', async (req, res) => {
@@ -339,3 +273,146 @@ app.get('/api/teams', async (req, res) => {
     }
 });
 
+// Route pour supprimer une équipe
+app.delete('/api/teams/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const deletedTeam = await Team.findByIdAndDelete(id);
+        if (!deletedTeam) {
+            return res.status(404).json({ message: 'Équipe non trouvée.' });
+        }
+        res.status(200).json({ message: `L'équipe "${deletedTeam.teamName}" a été supprimée avec succès.` });
+    } catch (error) {
+        console.error('Erreur lors de la suppression de l\'équipe :', error);
+        res.status(500).json({ message: 'Erreur lors de la suppression de l\'équipe.' });
+    }
+});
+
+
+// Route pour mettre à jour une équipe
+app.put('/api/teams/:id', async (req, res) => {
+    const { id } = req.params;
+    const { teamName, members } = req.body;
+
+    // Validation des données
+    if (!teamName || !members || !Array.isArray(members) || members.length === 0) {
+        return res.status(400).json({ message: 'Le nom de l\'équipe et les membres sont requis.' });
+    }
+
+    try {
+        // Vérifier que tous les Pokémon existent
+        const missingPokemons = [];
+        for (const member of members) {
+            const pokemonExists = await Pokemon.findOne({ PName: member });
+            if (!pokemonExists) {
+                missingPokemons.push(member);
+            }
+        }
+
+        // Si certains Pokémon sont manquants, retourner une erreur
+        if (missingPokemons.length > 0) {
+            return res.status(400).json({
+                message: 'Certains Pokémon n\'existent pas.',
+                missingPokemons
+            });
+        }
+
+        // Mettre à jour l'équipe si tous les Pokémon sont valides
+        const updatedTeam = await Team.findByIdAndUpdate(
+            id,
+            { teamName, members },
+            { new: true } // Retourne l'équipe mise à jour
+        );
+
+        if (!updatedTeam) {
+            return res.status(404).json({ message: 'Équipe non trouvée.' });
+        }
+
+        res.status(200).json({ message: 'Équipe mise à jour avec succès.', team: updatedTeam });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de l\'équipe :', error);
+        res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'équipe.' });
+    }
+});
+
+
+// Route pour rechercher une équipe par nom
+app.get('/api/teams/search/:name', async (req, res) => {
+    const { name } = req.params;
+
+    try {
+        const teams = await Team.find({
+            teamName: { $regex: name, $options: 'i' } // Recherche insensible à la casse
+        });
+
+        if (teams.length === 0) {
+            return res.status(404).json({ message: 'Aucune équipe correspondante trouvée.' });
+        }
+
+        res.status(200).json(teams);
+    } catch (error) {
+        console.error('Erreur lors de la recherche des équipes :', error);
+        res.status(500).json({ message: 'Erreur lors de la recherche des équipes.' });
+    }
+});
+
+
+// Route pour générer une équipe aléatoire de 6 Pokémon
+app.get('/api/teams/random', async (req, res) => {
+    try {
+        const randomPokemons = await Pokemon.aggregate([
+            { $sample: { size: 6 } } // Récupère 6 Pokémon au hasard
+        ]);
+
+        if (!randomPokemons || randomPokemons.length === 0) {
+            return res.status(404).json({ message: 'Aucun Pokémon trouvé.' });
+        }
+
+        // Retourne les Pokémon formatés
+        res.status(200).json(randomPokemons.map(pokemon => ({
+            name: pokemon.PName,
+            image: `/images/${pokemon.Image || 'default.png'}`,
+            type1: pokemon["Type 1"],
+            type2: pokemon["Type 2"]
+        })));
+    } catch (error) {
+        console.error('Erreur lors de la génération d\'équipe aléatoire:', error);
+        res.status(500).json({ message: 'Erreur lors de la génération de l\'équipe.' });
+    }
+});
+
+// Suggestions pour la construction d'une équipe
+app.post('/api/pokemon/teambuild/suggestion', async (req, res) => {
+    const { currentTeam } = req.body;
+
+    if (!currentTeam || !Array.isArray(currentTeam)) {
+        return res.status(400).json({ message: 'L\'équipe actuelle est requise.' });
+    }
+
+    try {
+        const suggestions = await Pokemon.find(
+            { PName: { $nin: currentTeam } },
+            { PName: 1, Teammates: 1, Image: 1, _id: 0 }
+        ).limit(50);
+
+        const formattedSuggestions = suggestions.map(pokemon => ({
+            name: pokemon.PName,
+            image: `/images/${pokemon.Image || 'default.png'}`,
+            synergyScore: Object.keys(pokemon.Teammates || {})
+                .filter(teammate => currentTeam.includes(teammate))
+                .reduce((sum, teammate) => sum + pokemon.Teammates[teammate], 0)
+        }));
+
+        res.status(200).json(formattedSuggestions.sort((a, b) => b.synergyScore - a.synergyScore).slice(0, 10));
+    } catch (error) {
+        console.error('Erreur lors de la récupération des suggestions :', error);
+        res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
+
+// ------------------- Démarrage du serveur -------------------
+app.listen(PORT, () => {
+    console.log(`Serveur en écoute sur le port ${PORT}`);
+});

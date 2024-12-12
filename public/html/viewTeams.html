@@ -9,15 +9,27 @@
 <body>
     <div class="container">
         <h1>Liste des Équipes</h1>
-        <ul id="teams-list"></ul>
-        <!-- Bouton pour retourner au Team Builder -->
-        <button onclick="window.location.href = '/html/teamBuilder.html';" class="back-button">
-            Retour au Team Builder
-        </button>
-        <!-- Bouton pour retourner à la page d'accueil -->
-        <button onclick="window.location.href = '/html/home.html';" class="back-button">
-            Retour à la page d'accueil
-        </button>
+        <ul id="teams-list">
+            <!-- Exemple de structure pour une équipe -->
+            <li class="team-item">
+                <div class="team-info">
+                    <h2>Nom de l'équipe</h2>
+                    <p>Membres : [Membre 1, Membre 2]</p>
+                    <p>Date de création : 2024-12-12</p>
+        
+                    <!-- Boutons -->
+                    <button class="update-team-button" data-id="team-id">Mettre à jour</button>
+                    <button class="delete-team-button" data-id="team-id">Supprimer</button>
+                </div>
+            </li>
+        </ul>
+        
+        <!-- Formulaire de recherche -->
+        <div class="search-form">
+            <input type="text" id="search-bar" placeholder="Rechercher une équipe">
+            <button id="search-button">Rechercher</button>
+        </div>
+        
     </div>
 
     <script src="../js/viewTeams.js"></script>
