@@ -222,6 +222,7 @@ app.delete('/api/pokemon/:name', async (req, res) => {
 
 app.put('/api/pokemon/:name', async (req, res) => {
     const pokemonName = req.params.name;
+    console.log('Données envoyées pour modification:', req.body);
 
     try {
         const updatedPokemon = await Pokemon.findOneAndUpdate(
@@ -231,13 +232,13 @@ app.put('/api/pokemon/:name', async (req, res) => {
         );
 
         if (updatedPokemon) {
-            res.json({ message: 'Pokémon modifié avec succès.', pokemon: updatedPokemon });
+            console.log({ message: 'Pokémon modifié avec succès.', pokemon: updatedPokemon });
         } else {
-            res.status(404).send('Pokémon non trouvé.');
+            console.log(404).send('Pokémon non trouvé.');
         }
-        console.log("passé en param")
     } catch (error) {
         console.error('Erreur lors de la mise à jour du Pokémon:', error);
         res.status(500).send('Erreur serveur.');
     }
 });
+
