@@ -68,27 +68,41 @@ const Team = mongoose.model('Team', teamSchema);
 
 // Obtenir les détails d'un Pokémon
 app.get('/api/pokemon/:name', async (req, res) => {
+    const pokemonName = req.params.name.toLowerCase();
     try {
-        const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${req.params.name}$`, 'i') });
-        if (!pokemon) return res.status(404).send('Pokémon non trouvé');
+        const pokemon = await Pokemon.findOne({ PName: new RegExp(`^${pokemonName}$`, 'i') });
 
-        res.json({
-            name: pokemon.PName,
-            items: pokemon.Items || {},
-            image: `${pokemon.Image || 'default.png'}`,
-            stats: {
-                hp: pokemon.HP || 0,
-                attack: pokemon.Attack || 0,
-                defense: pokemon.Defense || 0,
-                spAtk: pokemon.SpAtk || 0,
-                spDef: pokemon.SpDef || 0,
-                speed: pokemon.Speed || 0
-            },
-            type1: pokemon["Type 1"],
-            type2: pokemon["Type 2"],
-            usage: pokemon.usage || 0,
-            abilities: pokemon.Abilities || {}
-        });
+        if (pokemon) {
+            res.json({
+                name: pokemon.PName,
+                items: pokemon.Items || {},
+                rawCount: pokemon["Raw count"] || 0,
+                spreads: pokemon.Spreads || {},
+                teraTypes: pokemon["Tera Types"] || {},
+                teammates: pokemon.Teammates || {},
+                viabilityCeiling: pokemon["Viability Ceiling"] || [],
+                abilities: pokemon.Abilities || {},
+                checksAndCounters: pokemon["Checks and Counters"] || {},
+                usage: pokemon.usage || 0,
+                moves: pokemon.Moves || {},
+                happiness: pokemon.Happiness || {}, // Champ Happiness transmis directement
+                image: pokemon.Image || '',
+                index: pokemon.Index || 0,
+                type1: pokemon["Type 1"] || '',
+                type2: pokemon["Type 2"] || '',
+                total: pokemon.Total || 0,
+                stats: {
+                    hp: pokemon.HP || 0,
+                    attack: pokemon.Attack || 0,
+                    defense: pokemon.Defense || 0,
+                    spAtk: pokemon.SpAtk || 0,
+                    spDef: pokemon.SpDef || 0,
+                    speed: pokemon.Speed || 0
+                }
+            });
+        } else {
+            res.status(404).send('Pokémon non trouvé');
+        }
     } catch (error) {
         console.error('Erreur lors de la récupération du Pokémon:', error);
         res.status(500).send('Erreur serveur');
