@@ -22,13 +22,6 @@ document.getElementById('add-pokemon-form').addEventListener('submit', function(
         return;
     }
 
-    // Vérification si les statistiques dépassent 255
-    if (pokemonData.hp > 255 || pokemonData.attack > 255 || pokemonData.defense > 255 || 
-        pokemonData.spAtk > 255 || pokemonData.spDef > 255 || pokemonData.speed > 255) {
-        document.getElementById('status-message').textContent = 'Les valeurs des statistiques ne peuvent pas dépasser 255.';
-        return;
-    }
-
     // Envoyer la requête POST pour ajouter un Pokémon
     fetch('/api/pokemon', {
         method: 'POST',
@@ -38,7 +31,9 @@ document.getElementById('add-pokemon-form').addEventListener('submit', function(
         body: JSON.stringify(pokemonData),
     })
     .then(response => {
-        if (response.ok) {
+        if (response.status === 409) { // Conflit, Pokémon existe déjà
+            throw new Error('Ce Pokémon existe déjà dans la base de données.');
+        } else if (response.ok) {
             return response.text(); // Récupérer le message de succès
         } else {
             throw new Error('Erreur lors de l\'ajout du Pokémon');
@@ -55,6 +50,10 @@ document.getElementById('add-pokemon-form').addEventListener('submit', function(
     })
     .catch(error => {
         console.error('Erreur:', error);
-        document.getElementById('status-message').textContent = 'Erreur lors de l\'ajout du Pokémon.';
+        if (error.message === 'Ce Pokémon existe déjà dans la base de données.') {
+            document.getElementById('status-message').textContent = 'Ce Pokémon existe déjà, veuillez choisir un autre nom.';
+        } else {
+            document.getElementById('status-message').textContent = 'Erreur lors de l\'ajout du Pokémon.';
+        }
     });
 });

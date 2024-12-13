@@ -174,16 +174,23 @@ app.get('/api/team/search/suggestion/:query', async (req, res) => {
     }
 });
 
-
 // Ajouter un Pokémon
 app.post('/api/pokemon', async (req, res) => {
     const { name, type1, type2, hp, attack, defense, spAtk, spDef, speed, image } = req.body;
 
+    // Vérification des champs requis
     if (!name || !type1 || !hp || !attack || !defense || !spAtk || !spDef || !speed) {
-        return res.status(400).send('Tous les champs requis doivent être remplis.');
+        return res.status(400).json({ error: 'Tous les champs requis doivent être remplis.' });
     }
 
     try {
+        // Vérifier l'existence d'un Pokémon avec le même nom
+        const existingPokemon = await Pokemon.findOne({ PName: name });
+        if (existingPokemon) {
+            return res.status(409).json({ error: 'Un Pokémon avec ce nom existe déjà.' });
+        }
+
+        // Ajouter le Pokémon
         const newPokemon = new Pokemon({
             PName: name,
             "Type 1": type1,
@@ -198,10 +205,10 @@ app.post('/api/pokemon', async (req, res) => {
             Total: hp + attack + defense + spAtk + spDef + speed
         });
         await newPokemon.save();
-        res.status(201).send('Pokémon ajouté avec succès!');
+        res.status(201).json({ message: 'Pokémon ajouté avec succès!' });
     } catch (error) {
-        console.error('Erreur lors de l\'ajout du Pokémon:', error);
-        res.status(500).send('Erreur serveur');
+        console.error('Erreur serveur:', error);
+        res.status(500).json({ error: 'Une erreur serveur est survenue. Veuillez réessayer plus tard.' });
     }
 });
 
@@ -217,7 +224,6 @@ app.delete('/api/pokemon/:name', async (req, res) => {
         res.status(500).send('Erreur serveur');
     }
 });
-
 // Mettre à jour un Pokémon
 app.put('/api/pokemon/:name', async (req, res) => {
     try {
@@ -226,17 +232,29 @@ app.put('/api/pokemon/:name', async (req, res) => {
             name, type1, type2, hp, attack, defense, spAtk, spDef, speed, image
         } = req.body;
 
-        // Validation côté serveur
-        if (hp < 0 || hp > 255 || attack < 0 || attack > 255 || defense < 0 || defense > 255 ||
-            spAtk < 0 || spAtk > 255 || spDef < 0 || spDef > 255 || speed < 0 || speed > 255) {
-            return res.status(400).json({ message: 'Les statistiques doivent être comprises entre 0 et 255.' });
+        // Validation des statistiques côté serveur
+        const stats = [hp, attack, defense, spAtk, spDef, speed];
+        if (stats.some(stat => stat < 0 || stat > 255)) {
+            return res.status(400).json({ 
+                error: 'Les statistiques doivent être comprises entre 0 et 255.' 
+            });
+        }
+
+        // Vérification de l'existence d'un autre Pokémon avec le même nom (en cas de renommage)
+        if (name && name.toLowerCase() !== pokemonName.toLowerCase()) {
+            const existingPokemon = await Pokemon.findOne({ PName: new RegExp(`^${name}$`, 'i') });
+            if (existingPokemon) {
+                return res.status(409).json({ 
+                    error: `Un autre Pokémon avec le nom "${name}" existe déjà.` 
+                });
+            }
         }
 
         // Mettre à jour le Pokémon
         const updatedPokemon = await Pokemon.findOneAndUpdate(
-            { PName: new RegExp(`^${pokemonName}$`, 'i') }, // Trouver le Pokémon par son nom
+            { PName: new RegExp(`^${pokemonName}$`, 'i') }, // Trouver le Pokémon par son nom actuel (insensible à la casse)
             {
-                PName: name, // Met à jour le nom
+                PName: name, // Met à jour le nom (ou conserve l'ancien s'il n'est pas fourni)
                 "Type 1": type1,
                 "Type 2": type2 || null,
                 HP: hp,
@@ -252,24 +270,31 @@ app.put('/api/pokemon/:name', async (req, res) => {
         );
 
         if (!updatedPokemon) {
-            return res.status(404).json({ message: 'Pokémon non trouvé.' });
+            return res.status(404).json({ 
+                error: `Le Pokémon "${pokemonName}" n'a pas été trouvé.` 
+            });
         }
 
+        // Réponse en cas de succès
         res.status(200).json({
             message: `Le Pokémon "${pokemonName}" a été modifié avec succès.`,
             pokemon: updatedPokemon
         });
     } catch (error) {
+        // Gestion des erreurs de validation
         if (error.name === 'ValidationError') {
-            return res.status(400).json({ message: 'Données invalides.', errors: error.errors });
+            return res.status(400).json({ 
+                error: 'Données invalides.',
+                details: error.errors 
+            });
         }
+        // Gestion des erreurs générales
         console.error('Erreur lors de la mise à jour du Pokémon :', error);
-        res.status(500).json({ message: 'Erreur serveur.' });
+        res.status(500).json({ 
+            error: 'Une erreur serveur est survenue. Veuillez réessayer plus tard.' 
+        });
     }
 });
-
-
-
 
 
 
