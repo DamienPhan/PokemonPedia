@@ -9,27 +9,20 @@
 <body>
     <div class="container">
         <h1>Liste des Équipes</h1>
-        <ul id="teams-list">
-            <!-- Exemple de structure pour une équipe -->
-            <li class="team-item">
-                <div class="team-info">
-                    <h2>Nom de l'équipe</h2>
-                    <p>Membres : [Membre 1, Membre 2]</p>
-                    <p>Date de création : 2024-12-12</p>
-        
-                    <!-- Boutons -->
-                    <button class="update-team-button" data-id="team-id">Mettre à jour</button>
-                    <button class="delete-team-button" data-id="team-id">Supprimer</button>
-                </div>
-            </li>
-        </ul>
         
         <!-- Formulaire de recherche -->
         <div class="search-form">
             <input type="text" id="search-bar" placeholder="Rechercher une équipe">
             <button id="search-button">Rechercher</button>
         </div>
-        
+
+        <!-- Zone de message d'état -->
+        <div id="status-message" style="display: none; margin-bottom: 10px;"></div>
+
+        <!-- Liste des équipes -->
+        <ul id="teams-list">
+            <!-- Les équipes seront affichées ici dynamiquement -->
+        </ul>
     </div>
 
     <script src="../js/viewTeams.js"></script>

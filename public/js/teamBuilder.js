@@ -137,27 +137,45 @@ async function generateRandomTeam() {
 function searchPokemon() {
     const query = searchInput.value.trim().toLowerCase();
 
+    // Réinitialiser les résultats si la barre de recherche est vide
     if (!query) {
-        searchResults.innerHTML = ''; // Réinitialiser les résultats si la recherche est vide
+        searchResults.innerHTML = '<li>Veuillez entrer un nom de Pokémon à rechercher.</li>';
         return;
     }
 
-    fetch(`/api/pokemon/search/suggestion/${query}`)
-        .then(response => response.json())
+    // Afficher un indicateur de chargement pendant la recherche
+    searchResults.innerHTML = '<li>Recherche en cours...</li>';
+
+    fetch(`/api/team/search/suggestion/${query}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur lors de la récupération des suggestions.');
+            }
+            return response.json();
+        })
         .then(results => {
-            console.log('Résultats des suggestions :', results);
+            if (results.length === 0) {
+                searchResults.innerHTML = '<li>Aucun Pokémon trouvé</li>';
+                return;
+            }
+
+            // Afficher les résultats dans le DOM
             searchResults.innerHTML = results.map(pokemon => `
                 <li onclick="addToTeam({ name: '${pokemon.name}', image: '${pokemon.image || 'default.png'}' })">
-                    <img src="${pokemon.image || 'default.png'}" alt="${pokemon.name}" style="width: 50px; height: 50px;" />
+                    <img src="${pokemon.image || '/images/default.png'}" 
+                         alt="${pokemon.name}" 
+                         style="width: 50px; height: 50px;" 
+                         onerror="this.src='/images/default.png';" />
                     ${pokemon.name}
                 </li>
             `).join('');
         })
         .catch(error => {
             console.error('Erreur lors de la recherche :', error);
-            searchResults.innerHTML = '<li>Aucun Pokémon trouvé</li>';
+            searchResults.innerHTML = '<li>Erreur lors de la recherche. Veuillez réessayer plus tard.</li>';
         });
 }
+
 
 // Charger les suggestions basées sur l'équipe actuelle
 function loadSuggestions() {

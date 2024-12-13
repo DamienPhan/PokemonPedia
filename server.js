@@ -45,12 +45,12 @@ const pokemonSchema = new mongoose.Schema({
     "Type 1": String,
     "Type 2": String,
     Total: Number,
-    HP: Number,
-    Attack: Number,
-    Defense: Number,
-    SpAtk: Number,
-    SpDef: Number,
-    Speed: Number
+    HP: { type: Number, required: true, min: 0, max: 255 },
+    Attack: { type: Number, required: true, min: 0, max: 255 },
+    Defense: { type: Number, required: true, min: 0, max: 255 },
+    SpAtk: { type: Number, required: true, min: 0, max: 255 },
+    SpDef: { type: Number, required: true, min: 0, max: 255 },
+    Speed: { type: Number, required: true, min: 0, max: 255 },
 }, { collection: 'PokemonData' });
 
 const Pokemon = mongoose.model('Pokemon', pokemonSchema);
@@ -133,6 +133,47 @@ app.get('/api/pokemon/search/suggestion/:query', async (req, res) => {
     }
 });
 
+// Rechercher des suggestions de Pokémon
+app.get('/api/team/search/suggestion/:query', async (req, res) => {
+    const query = req.params.query?.trim().toLowerCase();
+
+    // Vérifier que la requête contient une recherche valide
+    if (!query || query.length < 1) {
+        return res.status(400).json({
+            message: 'La recherche est invalide. Veuillez entrer un texte à rechercher.',
+        });
+    }
+
+    try {
+        // Recherche des Pokémon correspondant au texte de la requête
+        const suggestions = await Pokemon.find(
+            { PName: { $regex: query, $options: 'i' } }, // Recherche insensible à la casse
+            { PName: 1, Image: 1, _id: 0 } // Renvoie uniquement `PName` et `Image`
+        ).limit(10); // Limiter les résultats à 10
+
+        // Si aucun résultat n'est trouvé
+        if (!suggestions || suggestions.length === 0) {
+            return res.status(404).json({
+                message: 'Aucun Pokémon ne correspond à la recherche.',
+                suggestions: [],
+            });
+        }
+
+        // Formater les résultats pour le client
+        const pokemonData = suggestions.map((p) => ({
+            name: p.PName,
+            image: p.Image ? `/images/${p.Image}` : '/images/default.png', // Fallback à une image par défaut
+        }));
+
+        res.status(200).json(pokemonData);
+    } catch (error) {
+        console.error('Erreur lors de la récupération des suggestions:', error);
+        res.status(500).json({
+            message: 'Erreur serveur lors de la récupération des suggestions.',
+        });
+    }
+});
+
 
 // Ajouter un Pokémon
 app.post('/api/pokemon', async (req, res) => {
@@ -180,29 +221,48 @@ app.delete('/api/pokemon/:name', async (req, res) => {
 // Mettre à jour un Pokémon
 app.put('/api/pokemon/:name', async (req, res) => {
     try {
+        const pokemonName = req.params.name; // Nom actuel du Pokémon dans l'URL
+        const {
+            name, type1, type2, hp, attack, defense, spAtk, spDef, speed, image
+        } = req.body;
+
+        // Validation côté serveur
+        if (hp < 0 || hp > 255 || attack < 0 || attack > 255 || defense < 0 || defense > 255 ||
+            spAtk < 0 || spAtk > 255 || spDef < 0 || spDef > 255 || speed < 0 || speed > 255) {
+            return res.status(400).json({ message: 'Les statistiques doivent être comprises entre 0 et 255.' });
+        }
+
+        // Mettre à jour le Pokémon
         const updatedPokemon = await Pokemon.findOneAndUpdate(
-            { PName: new RegExp(`^${req.params.name}$`, 'i') },
+            { PName: new RegExp(`^${pokemonName}$`, 'i') }, // Trouver le Pokémon par son nom
             {
-                "Type 1": req.body.type1,
-                "Type 2": req.body.type2 || null,
-                HP: req.body.hp,
-                Attack: req.body.attack,
-                Defense: req.body.defense,
-                SpAtk: req.body.spAtk,
-                SpDef: req.body.spDef,
-                Speed: req.body.speed,
-                Image: req.body.image || ''
+                PName: name, // Met à jour le nom
+                "Type 1": type1,
+                "Type 2": type2 || null,
+                HP: hp,
+                Attack: attack,
+                Defense: defense,
+                SpAtk: spAtk,
+                SpDef: spDef,
+                Speed: speed,
+                Image: image || '',
+                Total: hp + attack + defense + spAtk + spDef + speed // Recalcule le total
             },
-            { new: true, runValidators: true }
+            { new: true, runValidators: true } // Retourne l'objet mis à jour et valide les données
         );
 
-        if (!updatedPokemon) return res.status(404).json({ message: 'Pokémon non trouvé.' });
+        if (!updatedPokemon) {
+            return res.status(404).json({ message: 'Pokémon non trouvé.' });
+        }
 
         res.status(200).json({
-            message: `Le Pokémon "${req.params.name}" a été modifié avec succès.`,
+            message: `Le Pokémon "${pokemonName}" a été modifié avec succès.`,
             pokemon: updatedPokemon
         });
     } catch (error) {
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: 'Données invalides.', errors: error.errors });
+        }
         console.error('Erreur lors de la mise à jour du Pokémon :', error);
         res.status(500).json({ message: 'Erreur serveur.' });
     }
@@ -364,12 +424,37 @@ app.get('/api/teams/search/:name', async (req, res) => {
             return res.status(404).json({ message: 'Aucune équipe correspondante trouvée.' });
         }
 
-        res.status(200).json(teams);
+        // Enrichir les membres avec les données des Pokémon
+        const enrichedTeams = await Promise.all(
+            teams.map(async (team) => {
+                const enrichedMembers = await Promise.all(
+                    team.members.map(async (memberName) => {
+                        const pokemon = await Pokemon.findOne(
+                            { PName: memberName },
+                            { PName: 1, Image: 1, _id: 0 }
+                        );
+
+                        return {
+                            name: pokemon?.PName || memberName, // Utiliser le nom du Pokémon ou le nom brut
+                            image: pokemon?.Image || '/images/default.png', // Utiliser l'image ou une image par défaut
+                        };
+                    })
+                );
+
+                return {
+                    ...team.toObject(), // Convertir le modèle Mongoose en objet JavaScript
+                    members: enrichedMembers,
+                };
+            })
+        );
+
+        res.status(200).json(enrichedTeams);
     } catch (error) {
         console.error('Erreur lors de la recherche des équipes :', error);
         res.status(500).json({ message: 'Erreur lors de la recherche des équipes.' });
     }
 });
+
 
 
 // Route pour générer une équipe aléatoire de 6 Pokémon

@@ -4,6 +4,7 @@
 const teamsList = document.getElementById('teams-list');
 const searchButton = document.getElementById('search-button');
 const searchBar = document.getElementById('search-bar');
+const statusMessage = document.getElementById('status-message');
 
 // -------------------- FONCTIONS PRINCIPALES --------------------
 
@@ -15,39 +16,49 @@ async function fetchTeams() {
 
         const teams = await response.json();
         if (teams.length === 0) {
-            teamsList.innerHTML = '<li>Aucune équipe enregistrée.</li>';
+            displayStatusMessage('Info', 'Aucune équipe enregistrée.', 'info');
+            teamsList.innerHTML = '';
             return;
         }
 
-        // Afficher les équipes
+        // Afficher les équipes enrichies
         displayTeams(teams);
     } catch (error) {
         console.error('Erreur lors de la récupération des équipes :', error);
-        teamsList.innerHTML = '<li>Erreur lors du chargement des équipes.</li>';
+        displayStatusMessage('Erreur', 'Erreur lors du chargement des équipes.', 'error');
     }
 }
 
 // Rechercher une équipe
 async function searchTeams() {
     const searchQuery = searchBar.value.trim();
+
+    // Vérification de l'entrée
     if (!searchQuery) {
-        alert('Entrez un nom pour la recherche.');
+        displayStatusMessage('Erreur', 'Veuillez entrer un nom pour la recherche.', 'error');
         return;
     }
 
     try {
         const response = await fetch(`/api/teams/search/${encodeURIComponent(searchQuery)}`);
-        if (!response.ok) throw new Error('Aucune équipe trouvée.');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erreur lors de la recherche.');
+        }
 
         const teams = await response.json();
+
+        // Afficher les équipes ou un message si aucune n'est trouvée
         if (teams.length > 0) {
             displayTeams(teams);
+            displayStatusMessage('Succès', 'Résultats trouvés.', 'success');
         } else {
-            teamsList.innerHTML = '<p>Aucune équipe correspondante trouvée.</p>';
+            displayStatusMessage('Info', 'Aucune équipe correspondante trouvée.', 'info');
+            teamsList.innerHTML = '';
         }
     } catch (error) {
         console.error('Erreur lors de la recherche :', error);
-        alert(error.message || 'Erreur lors de la recherche des équipes.');
+        displayStatusMessage('Erreur', error.message || 'Erreur lors de la recherche des équipes.', 'error');
     }
 }
 
@@ -64,7 +75,7 @@ async function deleteTeam(teamId) {
         fetchTeams(); // Recharger la liste des équipes
     } catch (error) {
         console.error('Erreur lors de la suppression :', error);
-        alert('Une erreur est survenue lors de la suppression de l\'équipe.');
+        displayStatusMessage('Erreur', 'Une erreur est survenue lors de la suppression.', 'error');
     }
 }
 
@@ -84,16 +95,16 @@ async function updateTeam(teamId) {
         const response = await fetch(`/api/teams/${teamId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ teamName: newName, members: membersArray })
+            body: JSON.stringify({ teamName: newName, members: membersArray }),
         });
 
         const result = await response.json();
 
         if (!response.ok) {
             if (result.missingPokemons) {
-                alert(`Les Pokémon suivants n'existent pas : ${result.missingPokemons.join(', ')}`);
+                displayStatusMessage('Erreur', `Les Pokémon suivants n'existent pas : ${result.missingPokemons.join(', ')}`, 'error');
             } else {
-                alert('Erreur lors de la mise à jour.');
+                displayStatusMessage('Erreur', 'Erreur lors de la mise à jour.', 'error');
             }
             return;
         }
@@ -102,7 +113,7 @@ async function updateTeam(teamId) {
         fetchTeams(); // Recharger la liste des équipes
     } catch (error) {
         console.error('Erreur lors de la mise à jour :', error);
-        alert('Une erreur est survenue lors de la mise à jour de l\'équipe.');
+        displayStatusMessage('Erreur', 'Une erreur est survenue lors de la mise à jour.', 'error');
     }
 }
 
@@ -120,7 +131,7 @@ function displayTeams(teams) {
                         ${team.members
                             .map(member => `
                                 <span class="team-member">
-                                    <img src="${member.image || '/images/default.png'}" alt="${member.name}" class="member-image" />
+                                    <img src="${member.image}" alt="${member.name}" class="member-image" />
                                     ${member.name}
                                 </span>
                             `)
@@ -134,6 +145,21 @@ function displayTeams(teams) {
         `)
         .join('');
 }
+
+
+
+// Fonction pour afficher un message d'état
+function displayStatusMessage(title, message, type) {
+    const statusMessage = document.getElementById('status-message');
+    if (!statusMessage) {
+        console.error('Element #status-message introuvable dans le DOM.');
+        return;
+    }
+    statusMessage.innerHTML = `<strong>${title}:</strong> ${message}`;
+    statusMessage.style.color = type === 'error' ? 'red' : type === 'info' ? 'blue' : 'green';
+    statusMessage.style.display = 'block';
+}
+
 
 // -------------------- GESTION DES ÉVÉNEMENTS --------------------
 
