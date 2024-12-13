@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infos du Pokémon</title>
+    <link rel="stylesheet" href="../css/info.css">
+</head>
+<body class="theme--dark">
+    <div class="container">
+        <button id="back-button" class="back-button">⬅ Retour</button>
+        <!-- Ajouter un bouton Supprimer -->
+        <button id="delete-button" class="delete-pokemon">Supprimer ce Pokémon</button> 
+        <!-- Ajouter un bouton Modifier -->
+        <button id="edit-button" class="edit-pokemon">Modifier ce Pokémon</button>
+        <!-- Conteneur pour afficher les informations du Pokémon recherché -->
+        <div id="pokemon-details"></div>
+
+        <!-- Conteneur pour le graphique des Tera Types -->
+        <section class="pokemon-tera-types-chart">
+            <h3>Tera Types Chart</h3>
+            <canvas id="teraTypesChart" width="10" height="10"></canvas>
+        </section>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="../js/infoFunction.js"></script>
+    <script type="module" src="../js/info.js"></script>    
+</body>
+</html>

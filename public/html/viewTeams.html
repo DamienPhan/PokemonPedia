@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Équipes</title>
+    <link rel="stylesheet" href="../css/viewTeams.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Liste des Équipes</h1>
+        
+        <!-- Formulaire de recherche -->
+        <div class="search-form">
+            <input type="text" id="search-bar" placeholder="Rechercher une équipe">
+            <button id="search-button">Rechercher</button>
+        </div>
+
+        <!-- Zone de message d'état -->
+        <div id="status-message" style="display: none; margin-bottom: 10px;"></div>
+
+        <!-- Liste des équipes -->
+        <ul id="teams-list">
+            <!-- Les équipes seront affichées ici dynamiquement -->
+        </ul>
+    </div>
+
+    <script src="../js/viewTeams.js"></script>
+</body>
+</html>

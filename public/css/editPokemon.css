@@ -1,0 +1,123 @@
+/* Applique le thème sombre */
+.theme--dark {
+    --theme-bg-color: rgb(34, 34, 34);
+    --theme-odd-color: rgb(29, 29, 29);
+    --theme-bg-search: rgb(40, 40, 40);
+    --theme-bg-search-2: rgb(34, 34, 34);
+    --theme-border-color: #424242;
+    --theme-shadow-color: #111;
+    --theme-text-color: #ccc;
+    --theme-link-color: #5098d6;
+    --theme-cell-hover-border: 212121;
+    --theme-cell-hover-background: linear-gradient(#404040, #292929);
+    --theme-sidebar-color: #56579f;
+    --theme-sidebar-shadow: #111;
+    --theme-highlight-color: #494949;
+    --theme-callout-bg: rgb(29, 29, 29);
+    --theme-callout-border: #424242;
+}
+
+/* Styles généraux pour le corps et l'html */
+html, body {
+    width: 100%;
+    min-height: 100vh;
+    font: 16px Verdana, sans-serif;
+    color: var(--theme-text-color);
+    background-color: var(--theme-bg-color);
+    margin: 0;
+    padding: 0;
+}
+
+/* Conteneur du formulaire */
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: var(--theme-odd-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--theme-shadow-color);
+    text-align: center;
+}
+
+/* Titre du formulaire */
+h1 {
+    text-align: center;
+    color: var(--theme-text-color);
+    margin-bottom: 20px;
+}
+
+/* Style des labels et champs de saisie */
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--theme-text-color);
+    font-size: 16px;
+}
+
+/* Champs de texte */
+input[type="text"],
+input[type="number"],
+select {
+    width: 97%;
+    padding: 10px;
+    margin-right: 14%;
+    background-color: var(--theme-bg-search);
+    border: 1px solid var(--theme-border-color);
+    color: var(--theme-text-color);
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Style des options dans les listes déroulantes */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 30px;
+}
+
+/* Bouton */
+button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+}
+
+button[type="submit"]:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+/* Message de statut */
+#status-message {
+    margin-top: 20px;
+    padding: 10px;
+    text-align: center;
+    font-size: 16px;
+    display: none;
+}
+
+/* Style des messages de succès et d'erreur */
+#status-message.success {
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 5px;
+}
+
+#status-message.error {
+    background-color: #D25640;
+    color: white;
+    border-radius: 5px;
+}
+
+/* Affichage des messages après la modification du Pokémon */
+#status-message.active {
+    display: block;
+}
